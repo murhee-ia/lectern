@@ -1,0 +1,23 @@
+{
+  "name": "lectern",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@12.4.2",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,md,mjs,json}\" --ignore-unknown"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.13",
+    "typescript": "catalog:",
+    "prettier": "catalog:",
+    "@repo/eslint-config": "workspace:*"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

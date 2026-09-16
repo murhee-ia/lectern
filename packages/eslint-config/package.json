@@ -1,0 +1,33 @@
+{
+  "name": "@repo/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./eslint-preset.mjs": "./eslint-preset.mjs",
+    "./next-eslint.mjs": "./next-eslint.mjs",
+    "./react-eslint.mjs": "./react-eslint.mjs",
+    "./prettier-preset.mjs": "./prettier-preset.mjs"
+  },
+  "files": [
+    "eslint-preset.mjs", 
+    "next-eslint.mjs", 
+    "react-eslint.mjs", 
+    "prettier-preset.mjs"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "test": "echo \"no tests yet\" && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "@eslint/js": "catalog:",
+    "typescript-eslint": "catalog:",
+    "eslint-plugin-turbo": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-config-next": "16.3.5",
+    "eslint-plugin-react-hooks": "catalog:",
+    "globals": "catalog:"
+  }
+}
