@@ -1,0 +1,14 @@
+name: Deploy migrations to production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Placeholder — Supabase steps land in Phase 3
+        run: echo "No cloud Supabase project or migration exists yet. This job will run 'supabase link' + 'supabase db push' + 'supabase gen types typescript' once Phase 3 creates the first migration."
