@@ -1,0 +1,118 @@
+@layer components {
+  /* ---------------------------------------------------------------------
+   * Buttons — combine the base with exactly one variant, e.g.:
+   *   <button class="btn btn-primary">Start a session</button>
+   * --------------------------------------------------------------------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap
+      rounded-full px-5 py-2.5 font-sans text-sm font-semibold
+      transition-all duration-200 ease-out
+      focus-visible:outline-none focus-visible:ring-2
+      focus-visible:ring-highlight focus-visible:ring-offset-2
+      focus-visible:ring-offset-background
+      disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-highlight text-lectern-black shadow-glass-sm
+      hover:bg-highlight-secondary hover:shadow-glass active:scale-[0.98];
+  }
+  .btn-secondary {
+    @apply border border-lectern-white/15 bg-accent/50 text-foreground
+      backdrop-blur-lg hover:bg-accent/70 active:scale-[0.98];
+  }
+  .btn-ghost {
+    @apply bg-transparent text-foreground hover:bg-lectern-white/10
+      active:scale-[0.98];
+  }
+  .btn-outline {
+    @apply border border-lectern-white/25 bg-transparent text-foreground
+      hover:border-highlight hover:text-highlight active:scale-[0.98];
+  }
+
+  /* ---------------------------------------------------------------------
+   * Dropdown — pair with a glass surface, e.g.:
+   *   <div class="glass-panel dropdown-panel">
+   *     <button class="dropdown-item">Profile</button>
+   *     <div class="dropdown-separator"></div>
+   *     <button class="dropdown-item">Sign out</button>
+   *   </div>
+   * --------------------------------------------------------------------- */
+  .dropdown-panel {
+    @apply min-w-48 origin-top-right p-1.5 text-sm;
+  }
+  .dropdown-item {
+    @apply flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left
+      text-foreground/90 transition-colors hover:bg-lectern-white/10
+      hover:text-foreground focus-visible:bg-lectern-white/10
+      focus-visible:outline-none data-[disabled]:pointer-events-none
+      data-[disabled]:opacity-40;
+  }
+  .dropdown-separator {
+    @apply my-1.5 h-px bg-lectern-white/10;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Tooltip — deliberately more opaque than the other glass surfaces: it
+   * only ever holds a line or two of critical text, so it trades some
+   * "glass" for guaranteed legibility.
+   * --------------------------------------------------------------------- */
+  .tooltip-bubble {
+    @apply pointer-events-none max-w-64 rounded-lg border
+      border-lectern-white/10 bg-lectern-black/90 px-3 py-1.5 text-xs
+      font-medium text-foreground shadow-glass-sm backdrop-blur-md;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Info box — an informational callout (e.g. the LEGAL-1 "not legal
+   * advice" disclaimer). Pair with glass-card:
+   *   <div class="glass-card info-box">...</div>
+   * --------------------------------------------------------------------- */
+  .info-box {
+    @apply relative flex items-start gap-3 rounded-panel border
+      border-dashed border-muted/30 bg-lectern-primary-purple/25 p-4
+      text-sm text-foreground/90 backdrop-blur-lg;
+  }
+  .info-box-icon {
+    @apply mt-0.5 h-5 w-5 shrink-0 text-highlight;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Badges (will add more variants later)
+   * --------------------------------------------------------------------- */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full border
+      border-lectern-white/15 bg-lectern-white/10 px-2.5 py-0.5 font-sans
+      text-xs font-medium text-foreground/90;
+  }
+  .badge-accent {
+    @apply border-transparent bg-accent text-foreground;
+  }
+  .badge-highlight {
+    @apply border-transparent bg-highlight text-lectern-black;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Section framing — the small label + supporting line above a section
+   * heading (marketing sections, in-app section headers).
+   * --------------------------------------------------------------------- */
+  .section-eyebrow {
+    @apply inline-flex items-center gap-1.5 rounded-full border
+      border-lectern-white/15 bg-lectern-white/5 px-3 py-1 font-sans
+      text-xs font-semibold uppercase tracking-wide text-highlight;
+  }
+  .section-description {
+    @apply max-w-2xl text-base leading-relaxed text-foreground/75 md:text-lg;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Display headings — for when the visual size and the semantic <hN>
+   * level need to differ (e.g. a marketing hero's h1 vs. an in-app h1).
+   * --------------------------------------------------------------------- */
+  .heading-display {
+    @apply font-heading text-5xl font-semibold tracking-tight
+      text-foreground md:text-6xl;
+  }
+  .heading-1 { @apply font-heading text-4xl font-semibold tracking-tight text-foreground md:text-5xl; }
+  .heading-2 { @apply font-heading text-3xl font-semibold tracking-tight text-foreground md:text-4xl; }
+  .heading-3 { @apply font-heading text-2xl font-semibold text-foreground md:text-3xl; }
+}

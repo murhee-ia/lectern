@@ -4,6 +4,11 @@
   "private": true,
   "main": "./index.ts",
   "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./styles.css": "./styles/index.css",
+    "./fonts": "./fonts.ts"
+  },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -12,7 +17,8 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "typescript": "catalog:",
-    "eslint": "catalog:"
+    "eslint": "catalog:",
+    "next": "16.3.5",
+    "typescript": "catalog:"
   }
 }

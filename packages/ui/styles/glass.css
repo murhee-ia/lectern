@@ -1,0 +1,36 @@
+@layer components {
+  /* General-purpose glass surface: nav bars, modals, popovers, dropdown
+     panels. Includes the soft top-edge "sheen" that reads as glass. */
+  .glass-panel {
+    @apply relative isolate overflow-hidden rounded-panel border
+      border-lectern-white/10 bg-lectern-primary-purple/40 shadow-glass
+      backdrop-blur-xl backdrop-saturate-150;
+  }
+  .glass-panel::before {
+    content: "";
+    @apply pointer-events-none absolute inset-0 rounded-[inherit];
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0) 45%);
+  }
+
+  /* Content card: session tiles, library items, board requests. Lighter
+     shadow, more padding, no sheen — it's a container, not chrome. */
+  .glass-card {
+    @apply rounded-panel border border-lectern-white/10
+      bg-lectern-primary-purple/35 p-6 shadow-glass-sm
+      backdrop-blur-lg backdrop-saturate-150;
+  }
+
+  /* Elevated surface: anything that floats above a glass-panel, e.g. a
+     dropdown opened from inside a modal. Stronger tint + shadow so the
+     stacking stays readable. */
+  .glass-raised {
+    @apply relative isolate overflow-hidden rounded-panel border
+      border-lectern-white/15 bg-lectern-accent-purple/45 shadow-glass
+      backdrop-blur-xl backdrop-saturate-150;
+  }
+  .glass-raised::before {
+    content: "";
+    @apply pointer-events-none absolute inset-0 rounded-[inherit];
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.12), rgb(255 255 255 / 0) 45%);
+  }
+}

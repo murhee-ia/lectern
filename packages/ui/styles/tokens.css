@@ -1,0 +1,40 @@
+@theme {
+  /* ---------------------------------------------------------------------
+   * Primitives — the brand palette. Prefixed `lectern-` so they
+   * never collide with Tailwind's own built-in `white`/`black`.
+   * --------------------------------------------------------------------- */
+  --color-lectern-white: #f3f5fd;
+  --color-lectern-light-purple: #e9eafc;
+  --color-lectern-primary-purple: #280137;
+  --color-lectern-accent-purple: #3d1869;
+  --color-lectern-primary-yellow: #f6c507;
+  --color-lectern-secondary-yellow: #ffaa00;
+  --color-lectern-black: #001112;
+
+  /* ---------------------------------------------------------------------
+   * Semantic tokens — what components actually reference. Re-theming
+   * later means editing the seven lines above, not hunting through every
+   * component's CSS.
+   * --------------------------------------------------------------------- */
+  --color-background: var(--color-lectern-black);
+  --color-foreground: var(--color-lectern-white);
+  --color-muted: var(--color-lectern-light-purple);
+  --color-primary: var(--color-lectern-primary-purple);
+  --color-accent: var(--color-lectern-accent-purple);
+  --color-highlight: var(--color-lectern-primary-yellow);
+  --color-highlight-secondary: var(--color-lectern-secondary-yellow);
+
+  /* ---------------------------------------------------------------------
+   * Type — three fonts, three jobs.
+   * --------------------------------------------------------------------- */
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-fredoka), var(--font-sans);
+  --font-body: var(--font-nunito), var(--font-sans);
+
+  /* ---------------------------------------------------------------------
+   * Shape & elevation — the glass "feel", reused by every surface class.
+   * --------------------------------------------------------------------- */
+  --radius-panel: 1.5rem;
+  --shadow-glass: 0 8px 32px 0 rgb(0 0 0 / 0.35);
+  --shadow-glass-sm: 0 4px 16px 0 rgb(0 0 0 / 0.25);
+}
