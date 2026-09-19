@@ -12,7 +12,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: "2.117.0"
       
       - run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
         env:
