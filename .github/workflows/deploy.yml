@@ -10,5 +10,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Placeholder — Supabase steps land in Phase 3
-        run: echo "No cloud Supabase project or migration exists yet. This job will run 'supabase link' + 'supabase db push' + 'supabase gen types typescript' once Phase 3 creates the first migration."
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      
+      - run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      
+      - run: supabase gen types typescript --linked > packages/supabase/types.ts
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
