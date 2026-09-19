@@ -2,8 +2,12 @@
   "name": "@repo/supabase",
   "version": "0.0.0",
   "private": true,
-  "main": "./index.ts",
-  "types": "./index.ts",
+  "exports": {
+      "./browser": "./browser.ts",
+      "./server": "./server.ts",
+      "./admin": "./admin.ts",
+      "./types": "./types.ts"
+  },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -12,7 +16,13 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "typescript": "catalog:",
-    "eslint": "catalog:"
+    "eslint": "catalog:",
+    "next": "16.3.5",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0",
+    "server-only": "^0.0.1"
   }
 }

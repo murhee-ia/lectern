@@ -21,5 +21,13 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - uses: supabase/setup-cli@v1
+        with:
+          version: "2.117.0"
+
+      - run: supabase start
+
+      - run: supabase db reset
+
       - run: pnpm turbo run lint typecheck test --filter=[origin/main...HEAD]
 
