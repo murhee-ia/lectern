@@ -6,6 +6,7 @@
       "./browser": "./browser.ts",
       "./server": "./server.ts",
       "./admin": "./admin.ts",
+      "./middleware": "./middleware.ts",
       "./types": "./types.ts"
   },
   "scripts": {
@@ -17,12 +18,12 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "eslint": "catalog:",
-    "next": "16.3.5",
+    "next": "catalog:",
     "typescript": "catalog:"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.12.7",
-    "@supabase/supabase-js": "^2.116.0",
+    "@supabase/ssr": "catalog:",
+    "@supabase/supabase-js": "catalog:",
     "server-only": "^0.0.1"
   }
 }
