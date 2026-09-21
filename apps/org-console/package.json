@@ -10,9 +10,11 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
-    "next": "16.3.5",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "@repo/supabase": "workspace:*",
+    "@supabase/supabase-js": "catalog:",
     "@repo/ui": "workspace:*"
   },
   "devDependencies": {

@@ -10,10 +10,14 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
-    "next": "16.3.5",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "@repo/ui": "workspace:*"
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "@repo/supabase": "workspace:*",
+    "@supabase/supabase-js": "catalog:",
+    "@repo/ui": "workspace:*",
+    "lucide-react": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

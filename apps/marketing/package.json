@@ -10,10 +10,16 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
-    "next": "16.3.5",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "@repo/ui": "workspace:*"
+    "@marsidev/react-turnstile": "^1.6.1",
+    "@repo/supabase": "workspace:*",
+    "@supabase/supabase-js": "catalog:",
+    "@repo/ui": "workspace:*",
+    "disposable-email-domains": "^1.0.62",
+    "lucide-react": "catalog:",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

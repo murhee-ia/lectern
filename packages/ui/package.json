@@ -7,18 +7,30 @@
   "exports": {
     ".": "./index.ts",
     "./styles.css": "./styles/index.css",
-    "./fonts": "./fonts.ts"
+    "./fonts": "./fonts.ts",
+    "./components/*": "./components/*.tsx"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "echo \"no tests yet\" && exit 0"
   },
+  "peerDependencies": {
+    "react": "^19"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "cn": "^0.3.0",
+    "lucide-react": "catalog:",
+    "radix-ui": "^1.6.7"
+  },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/react": "^19",
     "eslint": "catalog:",
     "next": "16.3.5",
+    "react": "19.2.8",
     "typescript": "catalog:"
   }
 }
