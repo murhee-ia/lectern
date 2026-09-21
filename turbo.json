@@ -4,10 +4,13 @@
     "NEXT_PUBLIC_SUPABASE_URL",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
+    "NEXT_PUBLIC_MARKETING_URL",
+    "NEXT_PUBLIC_WORKSPACE_URL",
+    "NEXT_PUBLIC_ORG_CONSOLE_URL",
     "GOOGLE_OAUTH_CLIENT_ID",
     "GOOGLE_OAUTH_CLIENT_SECRET",
     "RESEND_API_KEY",
-    "TURNSTILE_SITE_KEY",
+    "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
     "TURNSTILE_SECRET_KEY",
     "GEMINI_API_KEY",
     "GROQ_API_KEY",
@@ -18,7 +21,7 @@
     "STRIPE_SECRET_KEY",
     "STRIPE_PUBLISHABLE_KEY",
     "STRIPE_WEBHOOK_SECRET",
-    "SENTRY_DSN_WORKSPACE",
+    "SENTRY_DSN_WEB",
     "SENTRY_DSN_AI_SERVICE"
   ],
   "tasks": {
@@ -34,6 +37,9 @@
     },
     "test": {
       "dependsOn": ["^test"]
+    },
+    "test:e2e": { 
+      "cache": false 
     },
     "dev": {
       "cache": false,
