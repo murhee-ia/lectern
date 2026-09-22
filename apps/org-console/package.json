@@ -13,6 +13,8 @@
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "@repo/lib": "workspace:*",
+    "@repo/server": "workspace:*",
     "@repo/supabase": "workspace:*",
     "@repo/types": "workspace:*",
     "@supabase/supabase-js": "catalog:",

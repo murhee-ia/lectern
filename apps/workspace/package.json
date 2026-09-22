@@ -15,6 +15,8 @@
     "react-dom": "catalog:",
     "@repo/supabase": "workspace:*",
     "@repo/types": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "@repo/server": "workspace:*",
     "@supabase/supabase-js": "catalog:",
     "@repo/ui": "workspace:*",
     "@tanstack/react-form": "catalog:",
