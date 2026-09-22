@@ -14,10 +14,15 @@ CREATE TABLE IF NOT EXISTS member_profiles (
   display_name text,
   first_name text,
   last_name text,
+  avatar_path text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
 COMMENT ON TABLE member_profiles IS 'Public mirror of auth.users as auth.users itself is never exposed via PostgREST.';
+
+ALTER TABLE member_profiles DROP CONSTRAINT IF EXISTS member_profiles_avatar_path_matches_id;
+ALTER TABLE member_profiles ADD CONSTRAINT member_profiles_avatar_path_matches_id
+  CHECK (avatar_path IS NULL OR avatar_path = id::text || '/avatar');
 
 ALTER TABLE member_profiles DROP CONSTRAINT IF EXISTS member_profiles_display_name_length;
 ALTER TABLE member_profiles ADD CONSTRAINT member_profiles_display_name_length
@@ -30,6 +35,16 @@ ALTER TABLE member_profiles ADD CONSTRAINT member_profiles_first_name_length
 ALTER TABLE member_profiles DROP CONSTRAINT IF EXISTS member_profiles_last_name_length;
 ALTER TABLE member_profiles ADD CONSTRAINT member_profiles_last_name_length
   CHECK (last_name IS NULL OR char_length(trim(last_name)) BETWEEN 1 AND 80);
+
+
+-- ============================================================================
+-- S T O R A G E   ( A V A T A R S )
+-- ============================================================================
+
+-- Private bucket, never a bare public URL.
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', false)
+ON CONFLICT (id) DO NOTHING;
 
 
 -- ============================================================================
@@ -65,6 +80,44 @@ CREATE POLICY "a user can update their own profile" ON member_profiles
   TO authenticated
   USING (id = auth.uid())
   WITH CHECK (id = auth.uid());
+
+DROP POLICY IF EXISTS "a user can upload their own avatar" ON storage.objects;
+CREATE POLICY "a user can upload their own avatar" ON storage.objects
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+DROP POLICY IF EXISTS "a user can replace their own avatar" ON storage.objects;
+CREATE POLICY "a user can replace their own avatar" ON storage.objects
+  FOR UPDATE
+  TO authenticated
+  USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text)
+  WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+DROP POLICY IF EXISTS "a user can delete their own avatar" ON storage.objects;
+CREATE POLICY "a user can delete their own avatar" ON storage.objects
+  FOR DELETE
+  TO authenticated
+  USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+DROP POLICY IF EXISTS "a user and co-members can view an avatar" ON storage.objects;
+CREATE POLICY "a user and co-members can view an avatar" ON storage.objects
+  FOR SELECT
+  TO authenticated
+  USING (
+    bucket_id = 'avatars'
+    AND (
+      (storage.foldername(name))[1] = auth.uid()::text
+      OR EXISTS (
+        SELECT 1
+          FROM memberships AS viewer_membership
+          JOIN memberships AS target_membership
+            ON target_membership.organization_id = viewer_membership.organization_id
+          WHERE viewer_membership.user_id = auth.uid()
+            AND target_membership.user_id::text = (storage.foldername(name))[1]
+      )
+    )
+  );
 
 
 -- ============================================================================
@@ -139,17 +192,17 @@ CREATE OR REPLACE FUNCTION restrict_member_profiles_update_columns() RETURNS tri
 LANGUAGE plpgsql
 AS $$
   BEGIN
-    -- display_name/first_name/last_name are the columns a client CAN change directly.
+    -- display_name/first_name/last_name/avatar_path are the columns a client CAN change directly.
     IF pg_trigger_depth() = 1 AND (
       new.id <> old.id OR new.email <> old.email OR new.created_at <> old.created_at
     ) THEN
-      RAISE EXCEPTION 'Only display name, first name, and last name may be updated directly on a member profiles';
+      RAISE EXCEPTION 'Only display name, first name, last name, and avatar may be updated directly on a member profiles';
     END IF;
     RETURN new;
   END;
 $$;
 
-COMMENT ON FUNCTION restrict_member_profiles_update_columns() IS 'Defense-in-depth: a member_profiles row''s id/email/created_at may never change via a direct client UPDATE — only display_name/first_name/last_name. email is instead kept in sync from auth.users by handle_updated_user_email().';
+COMMENT ON FUNCTION restrict_member_profiles_update_columns() IS 'Defense-in-depth: a member_profiles row''s id/email/created_at may never change via a direct client UPDATE — only display_name/first_name/last_name/avatar_path. email is instead kept in sync from auth.users by handle_updated_user_email().';
 
 DROP TRIGGER IF EXISTS member_profiles_restrict_update ON member_profiles;
 CREATE TRIGGER member_profiles_restrict_update
