@@ -1,0 +1,26 @@
+{
+  "name": "@repo/server",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./auth": "./src/auth/auth.actions.ts",
+    "./organization": "./src/organization/organization.actions.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"no tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "@repo/supabase": "workspace:*",
+    "@repo/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "next": "catalog:",
+    "typescript": "catalog:",
+    "eslint": "catalog:",
+    "@types/node": "^20"
+  }
+}
