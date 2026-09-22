@@ -15,7 +15,8 @@
     "react-dom": "catalog:",
     "@repo/supabase": "workspace:*",
     "@supabase/supabase-js": "catalog:",
-    "@repo/ui": "workspace:*"
+    "@repo/ui": "workspace:*",
+    "@tanstack/react-table": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

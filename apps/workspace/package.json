@@ -16,6 +16,7 @@
     "@repo/supabase": "workspace:*",
     "@supabase/supabase-js": "catalog:",
     "@repo/ui": "workspace:*",
+    "@tanstack/react-form": "catalog:",
     "lucide-react": "catalog:",
     "zod": "catalog:"
   },

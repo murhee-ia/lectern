@@ -26,3 +26,5 @@ catalog:
   "@supabase/ssr": ^0.12.7
   lucide-react: ^0.469.0
   zod: ^4.6.5
+  "@tanstack/react-form": ^1.33.5
+  "@tanstack/react-table": ^9.2.4

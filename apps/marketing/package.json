@@ -14,6 +14,7 @@
     "@repo/supabase": "workspace:*",
     "@supabase/supabase-js": "catalog:",
     "@repo/ui": "workspace:*",
+    "@tanstack/react-form": "catalog:",
     "disposable-email-domains": "^1.0.62",
     "lucide-react": "catalog:",
     "next": "catalog:",
