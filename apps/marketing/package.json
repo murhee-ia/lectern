@@ -12,6 +12,7 @@
   "dependencies": {
     "@marsidev/react-turnstile": "^1.6.1",
     "@repo/supabase": "workspace:*",
+    "@repo/types": "workspace:*",
     "@supabase/supabase-js": "catalog:",
     "@repo/ui": "workspace:*",
     "@tanstack/react-form": "catalog:",
@@ -19,8 +20,7 @@
     "lucide-react": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
-    "react-dom": "catalog:",
-    "zod": "catalog:"
+    "react-dom": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

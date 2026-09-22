@@ -142,6 +142,40 @@ Same purpose-first model once a package outgrows a handful of flat files.
 `server.ts`, `admin.ts`, `middleware.ts`, `client.ts`, `types.ts`) — revisit
 this rule for it only if it grows past ~10 files.
 
+### `packages/types` — cross-app Zod schemas and TS types
+
+The single home for anything from §1's "shared across *apps*" carve-out:
+Zod schemas and plain TS types used by more than one of
+`apps/{marketing,workspace,org-console,superadmin}`. An app-local schema or
+type that's only ever imported within its own app stays in that app's
+`lib/schemas/<feature>/` or `types/<feature>/` per §2 — it only promotes to
+`packages/types` once a second app actually needs it (same
+duplication-triggered promotion rule as `packages/ui` compositions).
+
+Purpose-first, divided by feature label exactly like an app's `lib/schemas/`
+and `types/` folders:
+
+```
+packages/types/
+  schemas/
+    auth/auth.schemas.ts
+    organization/organization.schemas.ts
+  types/
+    organization/organization.types.ts
+  index.ts   Barrel re-export of everything below, for `@repo/types`.
+```
+
+Each feature file is also exposed as its own subpath export in
+`package.json` (`@repo/types/schemas/auth`, `@repo/types/schemas/organization`,
+`@repo/types/types/organization`, ...) — mirrors how `@repo/supabase`
+exposes `/server`, `/admin`, `/browser` rather than one flat barrel, so an
+app only pulls in the feature slice it actually imports. Add a new subpath
+entry whenever a new `schemas/<feature>/` or `types/<feature>/` file is
+added. `zod` itself is a dependency of `@repo/types`, not of the apps that
+consume its schemas — an app only adds a direct `zod` dependency if it
+imports from the `zod` package itself, not merely `.safeParse()`s an
+imported schema object.
+
 ### `packages/ui` — two tiers, don't confuse them
 
 - **`packages/ui/components/ui/`** — shadcn/ui primitives (Button, Input,

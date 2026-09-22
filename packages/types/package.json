@@ -4,10 +4,20 @@
   "private": true,
   "main": "./index.ts",
   "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./schemas/auth": "./schemas/auth/auth.schemas.ts",
+    "./schemas/profile": "./schemas/auth/profile.schemas.ts",
+    "./schemas/organization": "./schemas/organization/organization.schemas.ts",
+    "./types/organization": "./types/organization/organization.types.ts"
+  },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "echo \"no tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

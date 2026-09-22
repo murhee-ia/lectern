@@ -14,11 +14,11 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "@repo/supabase": "workspace:*",
+    "@repo/types": "workspace:*",
     "@supabase/supabase-js": "catalog:",
     "@repo/ui": "workspace:*",
     "@tanstack/react-form": "catalog:",
-    "lucide-react": "catalog:",
-    "zod": "catalog:"
+    "lucide-react": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

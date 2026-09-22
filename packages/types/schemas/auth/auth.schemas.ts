@@ -5,10 +5,10 @@ export const emailSchema = z.string().trim().email();
 export const signUpSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required.").max(80),
   lastName: z.string().trim().min(1, "Last name is required.").max(80),
-  displayName: z.string().trim().max(80).optional(),
+  displayName: z.string().trim().max(80),
   email: emailSchema,
-  password: z.string().min(6),
-  joinCode: z.string().trim().optional(),
+  password: z.string().min(6, "Password must be at least 6 characters."),
+  joinCode: z.string().trim().max(64),
 });
 
 export const signInSchema = z.object({
@@ -30,5 +30,5 @@ export const resetPasswordRequestSchema = z.object({
 });
 
 export const updatePasswordSchema = z.object({
-  password: z.string().min(6),
+  password: z.string().min(6, "Password must be at least 6 characters."),
 });
