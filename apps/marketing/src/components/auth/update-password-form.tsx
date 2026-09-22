@@ -8,7 +8,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { VoiceWaveform } from "@repo/ui/components/brand/voice-waveform";
-import { updatePasswordSchema } from "@repo/types/schemas/auth";
+import { updatePasswordSchema } from "@repo/lib/schemas/auth";
 import { createBrowserSupabaseClient } from "@repo/supabase/browser";
 
 export function UpdatePasswordForm() {

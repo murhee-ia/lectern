@@ -1,7 +1,7 @@
 "use server";
 
 import { createServerSupabaseClient } from "@repo/supabase/server";
-import { joinCodeSchema } from "@repo/types/schemas/organization";
+import { joinCodeSchema } from "@repo/lib/schemas/organization";
 
 interface ResolveOrganizationMembershipResult {
   personalOrganizationId: string;

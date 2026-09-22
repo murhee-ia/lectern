@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@repo/supabase/server";
 import { resolveOrganizationMembershipAction } from "@/lib/actions/auth/auth.actions";
-import { resolveSafeRedirect } from "@/lib/utils/auth/safe-redirect";
+import { resolveSafeRedirect } from "@repo/lib/utils/auth";
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);

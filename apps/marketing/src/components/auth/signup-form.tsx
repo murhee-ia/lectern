@@ -9,7 +9,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { VoiceWaveform } from "@repo/ui/components/brand/voice-waveform";
-import { signUpSchema } from "@repo/types/schemas/auth";
+import { signUpSchema } from "@repo/lib/schemas/auth";
 import { createBrowserSupabaseClient } from "@repo/supabase/browser";
 
 import { isDisposableEmailDomain } from "@/lib/utils/auth/disposable-email";

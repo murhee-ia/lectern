@@ -12,6 +12,7 @@
   "dependencies": {
     "@marsidev/react-turnstile": "^1.6.1",
     "@repo/supabase": "workspace:*",
+    "@repo/lib": "workspace:*",
     "@repo/types": "workspace:*",
     "@supabase/supabase-js": "catalog:",
     "@repo/ui": "workspace:*",

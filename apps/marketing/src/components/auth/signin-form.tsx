@@ -9,10 +9,9 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { VoiceWaveform } from "@repo/ui/components/brand/voice-waveform";
-import { signInSchema } from "@repo/types/schemas/auth";
+import { signInSchema } from "@repo/lib/schemas/auth";
+import { resolveSafeRedirect } from "@repo/lib/utils/auth";
 import { createBrowserSupabaseClient } from "@repo/supabase/browser";
-
-import { resolveSafeRedirect } from "@/lib/utils/auth/safe-redirect";
 
 import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
