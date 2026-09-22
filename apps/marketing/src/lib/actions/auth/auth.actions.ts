@@ -1,6 +1,7 @@
 "use server";
 
 import { createServerSupabaseClient } from "@repo/supabase/server";
+import { joinCodeSchema } from "@repo/types/schemas/organization";
 
 interface ResolveOrganizationMembershipResult {
   personalOrganizationId: string;
@@ -27,9 +28,14 @@ export async function resolveOrganizationMembershipAction(
     return { personalOrganizationId, joinedOrganizationId: null, joinCodeWasInvalid: false };
   }
 
+  const parsedJoinCode = joinCodeSchema.safeParse(joinCode);
+  if (!parsedJoinCode.success) {
+    return { personalOrganizationId, joinedOrganizationId: null, joinCodeWasInvalid: true };
+  }
+
   const { data: joinedOrganizationId, error: joinError } = await supabase.rpc(
     "join_organization_by_code",
-    { code: joinCode },
+    { code: parsedJoinCode.data },
   );
 
   if (joinError || !joinedOrganizationId) {
