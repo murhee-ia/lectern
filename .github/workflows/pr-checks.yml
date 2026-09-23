@@ -7,6 +7,21 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      # Non-secret values needed only for the local/CI stack to boot — see
+      # supabase/config.toml. Turnstile's are Cloudflare's own published
+      # "always passes" test keys (safe to commit, not real credentials);
+      # Google's are inert placeholders since auth-google-oauth-callback.spec.ts
+      # mocks Supabase's own /authorize endpoint before any real exchange
+      # with Google would happen. URLs match playwright.config.ts's webServer
+      # ports.
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+      GOOGLE_OAUTH_CLIENT_ID: ci-placeholder-client-id
+      GOOGLE_OAUTH_CLIENT_SECRET: ci-placeholder-client-secret
+      NEXT_PUBLIC_MARKETING_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_WORKSPACE_URL: http://127.0.0.1:3002
+      NEXT_PUBLIC_ORG_CONSOLE_URL: http://127.0.0.1:3001
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,5 +44,23 @@ jobs:
 
       - run: supabase db reset
 
+      - name: Export local Supabase connection details for the Next.js apps
+        # supabase status -o env prints KEY="VALUE" (quotes included in the
+        # value itself) — GITHUB_ENV takes whatever follows "=" literally,
+        # so the quotes have to be stripped or every consumer downstream
+        # gets a URL/key with literal quote characters in it.
+        run: |
+          STATUS=$(supabase status -o env)
+          API_URL=$(echo "$STATUS" | grep '^API_URL=' | cut -d= -f2- | tr -d '"')
+          ANON_KEY=$(echo "$STATUS" | grep '^ANON_KEY=' | cut -d= -f2- | tr -d '"')
+          SERVICE_ROLE_KEY=$(echo "$STATUS" | grep '^SERVICE_ROLE_KEY=' | cut -d= -f2- | tr -d '"')
+          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY" >> "$GITHUB_ENV"
+
       - run: pnpm turbo run lint typecheck test --filter=[origin/main...HEAD]
+
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - run: pnpm test:e2e
 
