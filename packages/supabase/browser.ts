@@ -4,7 +4,11 @@ import type { Database } from "./types";
 export function createBrowserSupabaseClient() {
   return createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookieOptions:
+        process.env.NODE_ENV === "production" ? { domain: ".lecternapp.me" } : undefined,
+    }
   )
 }
 

@@ -13,7 +13,7 @@ export const signUpSchema = z.object({
 
 export const signInSchema = z.object({
   email: emailSchema,
-  password: z.string().min(1),
+  password: z.string().min(6, "Password must be at least 6 characters."),
 });
 
 export const otpRequestSchema = z.object({
