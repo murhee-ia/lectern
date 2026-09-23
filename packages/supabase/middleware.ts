@@ -9,11 +9,14 @@ export async function updateSession(
   request: NextRequest,
 ): Promise<{ response: NextResponse; user: User | null }> {
   let response = NextResponse.next({ request });
+  const cookieOptions =
+    process.env.NODE_ENV === "production" ? { domain: ".lecternapp.me" } : undefined;
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions,
       cookies: {
         getAll() {
           return request.cookies.getAll();

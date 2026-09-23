@@ -6,11 +6,14 @@ import type { Database } from "./types";
 
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
+  const cookieOptions =
+    process.env.NODE_ENV === "production" ? { domain: ".lecternapp.me" } : undefined;
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions,
       cookies: {
         getAll() {
           return cookieStore.getAll();
