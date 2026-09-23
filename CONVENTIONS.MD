@@ -63,6 +63,9 @@ src/
     schemas/    Zod schemas.
     utils/      Pure helper functions — no React, no Supabase calls,
                 no side effects. The one deliberate catch-all category.
+    hooks/      Custom React hooks.
+    stores/     Zustand stores (client-side state) — divided by
+                *purpose-category*, not feature label; see below.
     constants/  Fixed values / config maps (reserved — none yet).
     supabase/   Reserved exception, not a default. Only for functions
                 that CANNOT be Server Actions — currently that's just
@@ -72,18 +75,116 @@ src/
                 packages/supabase/middleware.ts, which lives in the
                 package, not here.
   components/   React components — anything with JSX that isn't a page.
-  hooks/        Custom React hooks.
-  stores/       Zustand stores (client-side state).
   types/        App-local TS types, and ambient .d.ts module shims.
 ```
 
-Every one of lib/actions/, lib/schemas/, lib/supabase/, stores/, and types/ 
-is divided by feature label as the next path segment. components/, hooks/, 
-and lib/utils/ are divided by feature label too — just without a suffix 
-requirement on the filename (see §3).
+Every one of lib/actions/, lib/schemas/, lib/supabase/, and types/ is
+divided by feature label as the next path segment. components/ and
+lib/utils/ are divided by feature label too — just without a suffix
+requirement on the filename (see §3). lib/hooks/ is too, once there are
+enough hooks to warrant it — one flat file is fine below that. lib/stores/
+is the one deliberate exception to "divided by feature label": see below.
 
-`components/`, `hooks/`, and `lib/utils/` are divided by feature label too
-— just without a suffix requirement on the filename (see §3).
+### `lib/stores/` — two purpose-categories, not one
+
+Zustand serves two genuinely different jobs in this codebase, distinguished
+by one question: **does this state's correct starting value depend on
+per-request server data, or is it always the same constant regardless of
+who's asking?** That answer determines which of two category folders a
+store belongs in — divided by *category* first, not by feature label the
+way every other purpose folder is, because the category is what determines
+the store's entire shape and risk profile, not which feature it happens to
+belong to.
+
+```
+lib/
+  stores/
+    ui-orchestration-stores/
+      some-modal.store.ts
+    server-mirror-stores/
+      selected-organization.store.ts
+  hooks/
+    use-selected-organization-id.ts
+```
+
+- **`stores/ui-orchestration-stores/`** — modals, drawers, panels:
+  anything whose correct starting state is always the same constant for
+  every user, every request, forever (`isOpen: false`, `type: null`). No
+  server counterpart exists, so there's nothing to seed from a request or
+  reconcile against — a plain `create()` is enough. This will be the
+  *majority* of Zustand usage in Lectern going forward (a delete-confirm
+  modal, an invite-member dialog, ...). Shape:
+
+  ```ts
+  "use client";
+
+  import { create } from "zustand";
+
+  export type SomeModalType = "createX" | "editX" | "deleteX";
+
+  type SomeModalStore = {
+    type: SomeModalType | null;
+    isOpen: boolean;
+    data?: SomePayload;
+    onOpen: (type: SomeModalType, data?: SomePayload) => void;
+    onClose: () => void;
+  };
+
+  export const useSomeModal = create<SomeModalStore>((set) => ({
+    type: null,
+    isOpen: false,
+    data: undefined,
+    onOpen: (type, data) => set({ isOpen: true, type, data }),
+    onClose: () => set({ type: null, isOpen: false, data: undefined }),
+  }));
+  ```
+
+  `onOpen`/`onClose` always set every field in **one** atomic `set()` call
+  each — never separate calls that could leave the store in an
+  inconsistent half-open state. The hook name describes what it controls,
+  not that it's a store (`useSomeModal`, not `useSomeModalStore` — "Store"
+  is already implied by the file living under `stores/`). Export the
+  discriminant type union (callers need it to call `onOpen(type, ...)`
+  correctly); don't export the store's own shape type — it's only needed
+  to type the `create<T>()` call itself.
+
+- **`stores/server-mirror-stores/`** — state with a real, per-user,
+  per-request correct value that only the server knows first (e.g.
+  `selectedOrganizationId`, sourced from a cookie). Reach for this
+  category only when **both** of the following are true at once — it's
+  the rare case, not the default:
+  1. A Server Component elsewhere genuinely needs the server-confirmed
+     value to render correctly (so the state isn't purely client-side to
+     begin with), **and**
+  2. More than one component needs to react to a change instantly, before
+     the server round-trip resolves (so a plain Server Action +
+     `revalidatePath` + re-fetch isn't snappy enough on its own).
+
+  If only (1) holds, skip the store entirely — Server Components + a
+  Server Action + `revalidatePath` already produces a correct result,
+  just with the round-trip's latency. If only (2) holds, that's a
+  ui-orchestration store instead, not this category.
+
+  This needs a seed-then-reconcile pattern a ui-orchestration store never
+  does, precisely because there's no safe universal default to fall back
+  on the way there is for a modal (`isOpen: false` is always correct;
+  "which org is selected" isn't, until the server says so). Worked
+  example: `apps/workspace/src/lib/stores/server-mirror-stores/selected-organization.store.ts`,
+  paired with `apps/workspace/src/lib/hooks/use-selected-organization-id.ts`.
+  The store itself holds `string | null` (`null` meaning "nothing written
+  yet"); the paired hook wraps every read as
+  `storeValue ?? serverProvidedProp`, syncing the store to the server
+  value in a `useEffect` whenever that prop changes. That fallback is
+  safe by construction, not by convention — `useEffect` never runs during
+  server rendering, so the store is provably untouched (`null`) on every
+  server render and the client's first hydration pass. That means the
+  fallback is *always* what gets used for those two cases, with no
+  hydration mismatch possible and no risk of one request's value leaking
+  into another's server-rendered output on a long-lived server process.
+
+Same promotion rule as §5 for `packages/lib/src/stores/`: stays app-local
+until a second app genuinely needs the identical store — and the same
+category split applies there too.
 
 ---
 
@@ -102,7 +203,7 @@ requirement on the filename (see §3).
   |---|---|---|
   | Server actions (reads and writes both) | `.actions.ts` (plural — one file holds every action for that feature by default) | `actions/auth/auth.actions.ts` |
   | Zod schemas | `.schemas.ts` (plural, same "one file per feature by default" rule) | `lib/schemas/auth/auth.schemas.ts` |
-  | Zustand stores | `.store.ts` (one file per distinct piece of state) | `stores/session/floor-control.store.ts` |
+  | Zustand stores | `.store.ts` (one file per distinct piece of state) | `lib/stores/server-mirror-stores/selected-organization.store.ts` |
   | Local types | `.types.ts` | `types/organization/organization.types.ts` |
   | Route handler | `route.ts` (framework-mandated, not our choice) | `app/auth/confirm/route.ts` |
   | `supabase/` exception, if ever used | `.query.ts` for a read, `.mutation.ts` for a write | `supabase/auth/some-middleware-only-check.query.ts` |
@@ -113,7 +214,9 @@ requirement on the filename (see §3).
   export. Hooks use the standard React `use-` **prefix**, not a suffix —
   the one deliberate exception, because overriding an already-universal
   convention would be more confusing than following it:
-  `hooks/organization/use-organization-role.ts` exporting `useOrganizationRole`.
+  `lib/hooks/organization/use-organization-role.ts` exporting `useOrganizationRole`
+  (feature-labeled once there are enough hooks to warrant it — one flat file
+  under `lib/hooks/` is fine below that, as with `use-selected-organization-id.ts` today).
 
 ---
 
@@ -142,41 +245,48 @@ Same purpose-first model once a package outgrows a handful of flat files.
 `server.ts`, `admin.ts`, `middleware.ts`, `client.ts`, `types.ts`) — revisit
 this rule for it only if it grows past ~10 files.
 
-### `packages/types` — cross-app Zod schemas and TS types
+An app-local schema, type, util, or Server Action stays app-local by
+default. It only promotes to one of the shared packages below once a
+**second** app genuinely needs it identically — same duplication-triggered
+promotion rule as `packages/ui` compositions further down. `resolveSafeRedirect`
+and `signOutAction` are the two current examples: both were duplicated (or
+duplication-shaped) across apps before they were promoted.
 
-The single home for anything from §1's "shared across *apps*" carve-out:
-Zod schemas and plain TS types used by more than one of
-`apps/{marketing,workspace,org-console,superadmin}`. An app-local schema or
-type that's only ever imported within its own app stays in that app's
-`lib/schemas/<feature>/` or `types/<feature>/` per §2 — it only promotes to
-`packages/types` once a second app actually needs it (same
-duplication-triggered promotion rule as `packages/ui` compositions).
+### `packages/types` — cross-app plain TS types only, no Zod
 
-Purpose-first, divided by feature label exactly like an app's `lib/schemas/`
-and `types/` folders:
+`<feature>/<feature>.types.ts` at the package root, each also exposed as
+its own subpath export (`@repo/types/organization`, ...), plus a barrel
+`index.ts` for the bare `@repo/types` import. No runtime code, no Zod —
+that's `packages/lib`'s job below. Keeping the two separate is what lets
+this package stay flat instead of needing a `types/` subfolder to
+disambiguate from a `schemas/` sibling.
 
-```
-packages/types/
-  schemas/
-    auth/auth.schemas.ts
-    organization/organization.schemas.ts
-  types/
-    organization/organization.types.ts
-  index.ts   Barrel re-export of everything below, for `@repo/types`.
-```
+### `packages/lib` — cross-app Zod schemas and utils (`hooks/`, `stores/` reserved)
 
-Each feature file is also exposed as its own subpath export in
-`package.json` (`@repo/types/schemas/auth`, `@repo/types/schemas/organization`,
-`@repo/types/types/organization`, ...) — mirrors how `@repo/supabase`
-exposes `/server`, `/admin`, `/browser` rather than one flat barrel, so an
-app only pulls in the feature slice it actually imports. Add a new subpath
-entry whenever a new `schemas/<feature>/` or `types/<feature>/` file is
-added. `zod` itself is a dependency of `@repo/types`, not of the apps that
-consume its schemas — an app only adds a direct `zod` dependency if it
-imports from the `zod` package itself, not merely `.safeParse()`s an
-imported schema object.
+Wraps its content in `src/`. `src/schemas/<feature>/<feature>.schemas.ts`
+and `src/utils/<feature>/<name>.ts` today; `src/hooks/` and
+`src/stores/{ui-orchestration-stores,server-mirror-stores}/` are reserved
+for the same promotion rule once an app-local hook or store is genuinely
+needed by a second app — see §2 for the two `stores/` categories. Each feature file is its own subpath
+export (`@repo/lib/schemas/auth`, `@repo/lib/utils/auth`, ...), mirroring
+how `@repo/supabase` exposes `/server`, `/admin`, `/browser` rather than
+one flat barrel, so an app only pulls in the slice it actually imports.
+`zod` is a dependency of `@repo/lib`, not of the apps that consume its
+schemas — an app only adds a direct `zod` dependency if it imports from
+the `zod` package itself, not merely `.safeParse()`s an imported schema
+object.
 
-### `packages/ui` — two tiers, don't confuse them
+### `packages/server` — cross-app Server Actions
+
+Wraps its content in `src/`: `src/<feature>/<feature>.actions.ts`, one
+subpath export per feature (`@repo/server/auth`, `@repo/server/organization`,
+...). Deliberately no barrel `index.ts`/`"."` export — importing straight
+from the file that carries `"use server"` is more reliable for Next.js's
+Server Action bundler tracing than re-exporting through a barrel. Same
+constraint as an app-local action per §6: creates its own Supabase client
+internally, never accepts one as a parameter.
+
+### `packages/ui` — three tiers, don't confuse them
 
 - **`packages/ui/components/ui/`** — shadcn/ui primitives (Button, Input,
   Label, ...). Generic design-system building blocks with zero product
@@ -186,16 +296,18 @@ imported schema object.
   tokens in styles/tokens.css, so no per-component color editing is expected. 
   A shape/sizing tweak (like Button's rounded-full) is the one legitimate 
   exception. Never write a new primitive by hand here.
+- **`packages/ui/components/customs/`** — cross-app compositions that use
+  those primitives but carry a little product logic (e.g. `SignOutButton`
+  taking a `signOutAction`-shaped action as a prop instead of importing
+  `@repo/server` itself, so this package never depends on packages above
+  it in the stack). Same promotion rule as everything else in this
+  section — only once genuinely needed by 2+ apps identically.
 - **`apps/<name>/src/components/<feature>/`** — feature-specific
   compositions that *use* those primitives (e.g. `DeleteAccountButton`
   renders a shadcn `Button` with `variant="destructive"` plus this
   product's confirm-twice flow). These stay app-local per §1/§2 — a
   composition belonging to one app's `auth` feature has no reason to be
   shared, even if another app has its own unrelated `auth` components.
-
-If a *composition* (not a primitive) turns out to genuinely be needed by
-more than one app identically, that's what promotes it into `packages/ui`
-directly — not by default, only once real duplication shows up.
 
 ---
 
