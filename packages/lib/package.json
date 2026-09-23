@@ -9,7 +9,8 @@
     "./schemas/auth": "./src/schemas/auth/auth.schemas.ts",
     "./schemas/profile": "./src/schemas/auth/profile.schemas.ts",
     "./schemas/organization": "./src/schemas/organization/organization.schemas.ts",
-    "./utils/auth": "./src/utils/auth/safe-redirect.ts"
+    "./utils/auth": "./src/utils/auth/safe-redirect.ts",
+    "./utils/formatting": "./src/utils/formatting/date.ts"
   },
   "scripts": {
     "lint": "eslint .",
