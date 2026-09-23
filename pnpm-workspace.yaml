@@ -28,3 +28,4 @@ catalog:
   zod: ^4.6.5
   "@tanstack/react-form": ^1.33.5
   "@tanstack/react-table": ^9.2.4
+  zustand: ^5.0.0

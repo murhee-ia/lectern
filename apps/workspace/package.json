@@ -20,7 +20,8 @@
     "@supabase/supabase-js": "catalog:",
     "@repo/ui": "workspace:*",
     "@tanstack/react-form": "catalog:",
-    "lucide-react": "catalog:"
+    "lucide-react": "catalog:",
+    "zustand": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

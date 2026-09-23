@@ -23,7 +23,11 @@ export async function GET(request: NextRequest) {
   const { joinedOrganizationId, joinCodeWasInvalid } = await resolveOrganizationMembershipAction(joinCode);
 
   const destination = new URL(resolveSafeRedirect(next, process.env.NEXT_PUBLIC_WORKSPACE_URL!));
-  if (joinCodeWasInvalid) destination.searchParams.set("notice", "invalid_join_code");
-  else if (joinedOrganizationId) destination.searchParams.set("notice", "joined_organization");
+  if (joinCodeWasInvalid) {
+    destination.searchParams.set("notice", "invalid_join_code");
+  } else if (joinedOrganizationId) {
+    destination.searchParams.set("notice", "joined_organization");
+    destination.searchParams.set("joinedOrganizationId", joinedOrganizationId);
+  }
   return NextResponse.redirect(destination);
 }
