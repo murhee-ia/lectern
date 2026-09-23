@@ -9,13 +9,33 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "format": "prettier --write \"**/*.{ts,tsx,md,mjs,json}\" --ignore-unknown"
+    "test:e2e": "playwright test",
+    "format": "prettier --write \"**/*.{ts,tsx,md,mjs,json}\" --ignore-unknown",
+
+    "supabase:check": "pnpm dlx supabase status",
+    "supabase:check:env": "pnpm dlx supabase status -o env",
+    "supabase:start": "pnpm dlx supabase start",
+    "supabase:stop": "pnpm dlx supabase stop",
+    "supabase:restart": "pnpm dlx supabase stop && pnpm dlx supabase start",
+    "supabase:reset": "pnpm dlx supabase db reset",
+    "supabase:migration:new": "pnpm dlx supabase migration new",
+    "supabase:migration:list": "pnpm dlx supabase migration list",
+    "supabase:diff": "pnpm dlx supabase db diff -f",
+
+    "supabase:login": "pnpm dlx supabase login",
+    "supabase:link": "pnpm dlx supabase link --project-ref",
+    "supabase:push": "pnpm dlx supabase db push",
+    "supabase:types": "pnpm dlx supabase gen types typescript --linked > packages/supabase/types.ts"
   },
   "devDependencies": {
-    "turbo": "^2.10.13",
-    "typescript": "catalog:",
+    "@playwright/test": "^1.63.0",
+    "@repo/eslint-config": "workspace:*",
+    "@supabase/supabase-js": "catalog:",
+    "@types/node": "^26.6.2",
+    "dotenv": "^18.0.1",
     "prettier": "catalog:",
-    "@repo/eslint-config": "workspace:*"
+    "turbo": "^2.10.13",
+    "typescript": "catalog:"
   },
   "engines": {
     "node": ">=24"

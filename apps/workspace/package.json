@@ -10,10 +10,18 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
-    "next": "16.3.5",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "@repo/ui": "workspace:*"
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "@repo/supabase": "workspace:*",
+    "@repo/types": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "@repo/server": "workspace:*",
+    "@supabase/supabase-js": "catalog:",
+    "@repo/ui": "workspace:*",
+    "@tanstack/react-form": "catalog:",
+    "lucide-react": "catalog:",
+    "zustand": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

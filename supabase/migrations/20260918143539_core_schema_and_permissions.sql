@@ -2,6 +2,7 @@
 -- Every object below is written idempotently, so that this migration can be re-run without error.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+SET search_path = public, extensions;
 
 
 -- ============================================================================
@@ -52,7 +53,7 @@ CREATE TABLE IF NOT EXISTS organizations (
   name text NOT NULL,
   plan text NOT NULL DEFAULT 'free',
   join_code text UNIQUE NOT NULL DEFAULT substr(md5(random()::text), 1, 8),
-  created_by uuid REFERENCES auth.users(id),
+  created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   stripe_customer_id text,
   stripe_subscription_id text,
   limit_overrides jsonb NOT NULL DEFAULT '{}',
@@ -124,6 +125,7 @@ CREATE OR REPLACE FUNCTION is_platform_admin() RETURNS boolean
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = public
 AS $$
   SELECT EXISTS (SELECT 1 FROM platform_admins WHERE user_id = auth.uid());
 $$;
@@ -134,6 +136,7 @@ CREATE OR REPLACE FUNCTION is_organization_member(check_organization_id uuid) RE
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = public
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM memberships
@@ -148,6 +151,7 @@ CREATE OR REPLACE FUNCTION has_role(check_organization_id uuid, exact_role organ
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = public
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM memberships
@@ -163,6 +167,7 @@ CREATE OR REPLACE FUNCTION has_permission(check_organization_id uuid, permission
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = public
 AS $$
   SELECT EXISTS (
     SELECT 1
@@ -257,16 +262,21 @@ CREATE POLICY "admins manage invites for their organizations" ON organization_in
 
 CREATE OR REPLACE FUNCTION prevent_admin_membership_delete() RETURNS trigger
 LANGUAGE plpgsql
+SET search_path = public
 AS $$
   BEGIN
-    IF old.role = 'admin' THEN
-      RAISE EXCEPTION 'Cannot delete an organization''s Admin membership directly — hand off the Admin role first';
+    IF old.role = 'admin' AND EXISTS (
+      SELECT 1 FROM memberships
+      WHERE organization_id = old.organization_id
+        AND user_id <> old.user_id
+    ) THEN
+      RAISE EXCEPTION 'Cannot delete an organization''s Admin membership directly while other members exist. Hand off the Admin role first';
     END IF;
     RETURN old;
   END;
 $$;
 
-COMMENT ON FUNCTION prevent_admin_membership_delete() IS 'Defense-in-depth: blocks direct deletion of any admin-role membership row. The handoff is the only sanctioned way an organization changes admins.';
+COMMENT ON FUNCTION prevent_admin_membership_delete() IS 'Defense-in-depth: blocks direct deletion of an admin-role membership row while other members remain in the org and the handoff is the only sanctioned way to change admins in that case. Allowed when the admin is the org''s only member like deleting a solo Free account.';
 
 DROP TRIGGER IF EXISTS memberships_prevent_admin_delete ON memberships;
 CREATE TRIGGER memberships_prevent_admin_delete

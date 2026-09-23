@@ -1,0 +1,9 @@
+<h2>Sign in to Lectern</h2>
+<p>Click below to sign in.</p>
+<p>
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&redirect_to={{ .RedirectTo }}">
+    Sign in
+  </a>
+</p>
+<p>Or enter this code: <strong>{{ .Token }}</strong></p>
+<p>This code expires in 1 hour.</p>

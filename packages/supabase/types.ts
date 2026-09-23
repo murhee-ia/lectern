@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -34,6 +39,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      member_profiles: {
+        Row: {
+          avatar_path: string | null
+          created_at: string
+          display_name: string | null
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+        }
+        Insert: {
+          avatar_path?: string | null
+          created_at?: string
+          display_name?: string | null
+          email: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+        }
+        Update: {
+          avatar_path?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+        }
+        Relationships: []
+      }
       memberships: {
         Row: {
           created_at: string
@@ -211,6 +246,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_delete_own_account: { Args: never; Returns: boolean }
+      ensure_personal_organization: { Args: never; Returns: string }
       has_permission: {
         Args: {
           check_organization_id: string
@@ -230,6 +267,7 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: never; Returns: boolean }
+      join_organization_by_code: { Args: { code: string }; Returns: string }
     }
     Enums: {
       app_permission:
@@ -404,4 +442,3 @@ export const Constants = {
     },
   },
 } as const
-

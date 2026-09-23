@@ -25,7 +25,7 @@
     @apply text-highlight underline-offset-4 transition-colors hover:text-highlight-secondary;
   }
 
-  ::selection {
-    @apply bg-highlight text-primary;
+    ::selection {
+    @apply bg-highlight text-foreground;
   }
 }

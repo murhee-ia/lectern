@@ -1,32 +1,50 @@
+/* Drives VoiceWaveform (components/brand/voice-waveform.tsx) — each bar sets
+   its own --voice-waveform-peak, so one keyframes block shapes every bar. */
+@keyframes voice-waveform {
+  0%,
+  100% {
+    height: 0.35rem;
+    opacity: 0.55;
+  }
+  50% {
+    height: var(--voice-waveform-peak, 1.5rem);
+    opacity: 1;
+  }
+}
+
+@keyframes btn-shine-sweep {
+  from {
+    left: -75%;
+  }
+  to {
+    left: 125%;
+  }
+}
+
 @layer components {
   /* ---------------------------------------------------------------------
-   * Buttons — combine the base with exactly one variant, e.g.:
-   *   <button class="btn btn-primary">Start a session</button>
+   * Button shine — a one-shot diagonal glint that sweeps across the
+   * default (primary CTA) button on hover, once per hover. Requires
+   * position: relative + overflow: hidden on the button itself so the
+   * glint clips to its rounded-full shape instead of spilling out.
    * --------------------------------------------------------------------- */
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap
-      rounded-full px-5 py-2.5 font-sans text-sm font-semibold
-      transition-all duration-200 ease-out
-      focus-visible:outline-none focus-visible:ring-2
-      focus-visible:ring-highlight focus-visible:ring-offset-2
-      focus-visible:ring-offset-background
-      disabled:pointer-events-none disabled:opacity-50;
+  .btn-shine {
+    position: relative;
+    overflow: hidden;
   }
-  .btn-primary {
-    @apply bg-highlight text-lectern-black shadow-glass-sm
-      hover:bg-highlight-secondary hover:shadow-glass active:scale-[0.98];
+  .btn-shine::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -75%;
+    width: 50%;
+    background: linear-gradient(115deg, transparent, rgb(255 255 255 / 0.55), transparent);
+    transform: skewX(-20deg);
+    pointer-events: none;
   }
-  .btn-secondary {
-    @apply border border-lectern-white/15 bg-accent/50 text-foreground
-      backdrop-blur-lg hover:bg-accent/70 active:scale-[0.98];
-  }
-  .btn-ghost {
-    @apply bg-transparent text-foreground hover:bg-lectern-white/10
-      active:scale-[0.98];
-  }
-  .btn-outline {
-    @apply border border-lectern-white/25 bg-transparent text-foreground
-      hover:border-highlight hover:text-highlight active:scale-[0.98];
+  .btn-shine:hover::after {
+    animation: btn-shine-sweep 0.75s ease-in-out;
   }
 
   /* ---------------------------------------------------------------------

@@ -9,7 +9,8 @@
   --color-lectern-accent-purple: #3d1869;
   --color-lectern-primary-yellow: #f6c507;
   --color-lectern-secondary-yellow: #ffaa00;
-  --color-lectern-black: #001112;
+  --color-lectern-black: #001011;
+  --color-lectern-danger-red: #dc2626;
 
   /* ---------------------------------------------------------------------
    * Semantic tokens — what components actually reference. Re-theming
@@ -19,10 +20,42 @@
   --color-background: var(--color-lectern-black);
   --color-foreground: var(--color-lectern-white);
   --color-muted: var(--color-lectern-light-purple);
-  --color-primary: var(--color-lectern-primary-purple);
+  /* --color-primary: var(--color-lectern-primary-purple); */
   --color-accent: var(--color-lectern-accent-purple);
   --color-highlight: var(--color-lectern-primary-yellow);
   --color-highlight-secondary: var(--color-lectern-secondary-yellow);
+
+/* ---------------------------------------------------------------------
+   * shadcn/ui theme contract — every shadcn component, present and future,
+   * reads exactly these names (primary, secondary, accent, destructive,
+   * ...). Defined once here, mapped onto the Lectern primitives, so
+   * `pnpm dlx shadcn@latest add <anything>` renders on-brand immediately —
+   * no per-component class edits needed, ever, for colors.
+   * --------------------------------------------------------------------- */
+
+   /* primary for primary buttons */
+
+  --color-primary: var(--color-lectern-primary-yellow);
+  --color-primary-foreground: var(--color-lectern-white);
+  --color-secondary: var(--color-lectern-accent-purple);
+  --color-secondary-foreground: var(--color-lectern-white);
+  --color-accent-foreground: var(--color-lectern-white);
+  --color-card: var(--color-lectern-primary-purple);
+  --color-card-foreground: var(--color-lectern-white);
+  --color-popover: var(--color-lectern-primary-purple);
+  --color-popover-foreground: var(--color-lectern-white);
+  --color-muted-foreground: var(--color-lectern-light-purple);
+  --color-destructive: var(--color-lectern-danger-red);
+  --color-destructive-foreground: var(--color-lectern-white);
+  --color-border: color-mix(in srgb, var(--color-lectern-white) 15%, transparent);
+  --color-input: color-mix(in srgb, var(--color-lectern-white) 15%, transparent);
+  --color-ring: var(--color-lectern-secondary-yellow);
+
+  --radius: 0.75rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 
   /* ---------------------------------------------------------------------
    * Type — three fonts, three jobs.

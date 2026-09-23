@@ -1,3 +1,5 @@
+@source "../components/**/*.{ts,tsx}";
+
 @import "./tokens.css";
 @import "./base.css";
 @import "./glass.css";
