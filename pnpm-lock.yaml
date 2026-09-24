@@ -344,6 +344,9 @@ importers:
       '@tanstack/react-table':
         specifier: 'catalog:'
         version: 9.2.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      lucide-react:
+        specifier: 'catalog:'
+        version: 0.469.0(react@19.2.8)
       next:
         specifier: 'catalog:'
         version: 16.3.5(@babel/core@7.29.7(supports-color@7.2.0))(@playwright/test@1.63.0)(@types/node@20.19.43)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -353,6 +356,9 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.2.8(react@19.2.8)
+      zustand:
+        specifier: 'catalog:'
+        version: 5.0.15(@types/react@19.3.0)(react@19.2.8)(use-sync-external-store@1.7.0(react@19.2.8))
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -490,6 +496,9 @@ importers:
 
   packages/lib:
     dependencies:
+      '@repo/types':
+        specifier: workspace:*
+        version: link:../types
       zod:
         specifier: 'catalog:'
         version: 4.6.5
@@ -503,9 +512,15 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.19.43
+      '@types/react':
+        specifier: ^19
+        version: 19.3.0
       eslint:
         specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@7.2.0)
+      react:
+        specifier: 'catalog:'
+        version: 19.2.8
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -518,6 +533,12 @@ importers:
       '@repo/types':
         specifier: workspace:*
         version: link:../types
+      '@supabase/supabase-js':
+        specifier: 'catalog:'
+        version: 2.116.0
+      server-only:
+        specifier: ^0.0.1
+        version: 0.0.1
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -528,12 +549,18 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.19.43
+      '@types/react':
+        specifier: ^19
+        version: 19.3.0
       eslint:
         specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@7.2.0)
       next:
         specifier: 'catalog:'
         version: 16.3.5(@babel/core@7.29.7(supports-color@7.2.0))(@playwright/test@1.63.0)(@types/node@20.19.43)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react:
+        specifier: 'catalog:'
+        version: 19.2.8
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -567,6 +594,10 @@ importers:
         version: 5.9.3
 
   packages/types:
+    dependencies:
+      '@repo/supabase':
+        specifier: workspace:*
+        version: link:../supabase
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -585,6 +616,12 @@ importers:
 
   packages/ui:
     dependencies:
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../lib
+      '@repo/types':
+        specifier: workspace:*
+        version: link:../types
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -603,6 +640,9 @@ importers:
       sonner:
         specifier: ^2.0.8
         version: 2.0.8(@types/react@19.3.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      tw-animate-css:
+        specifier: ^1.4.0
+        version: 1.4.0
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -3472,6 +3512,9 @@ packages:
   turbo@2.10.13:
     resolution: {integrity: sha512-69MkPbjk+G8oyC7pC2DeBk0rPdbLz51wuH5eAT0Q4BVJkzq/b1XM4kUUidsARbmDjwIELSJwd1ezITULY9kWNw==}
     hasBin: true
+
+  tw-animate-css@1.4.0:
+    resolution: {integrity: sha512-7bziOlRqH0hJx80h/3mbicLW7o8qLsH5+RaLR2t+OHM3D0JlWGODQKQ4cxbK7WlvmUxpcj6Kgu6EKqjrGFe3QQ==}
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -6737,6 +6780,8 @@ snapshots:
       '@turbo/linux-arm64': 2.10.13
       '@turbo/windows-64': 2.10.13
       '@turbo/windows-arm64': 2.10.13
+
+  tw-animate-css@1.4.0: {}
 
   type-check@0.4.0:
     dependencies:
