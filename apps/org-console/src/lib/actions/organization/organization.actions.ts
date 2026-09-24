@@ -1,3 +1,5 @@
+"use server";
+
 import { createServerSupabaseClient } from "@repo/supabase/server";
 import { WorkspaceOrganization, OrganizationMember } from "@repo/types/organization";
 
