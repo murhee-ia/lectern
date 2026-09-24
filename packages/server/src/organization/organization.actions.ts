@@ -76,16 +76,16 @@ export async function selectOrganizationAction(organizationId: string): Promise<
 
   const cookieStore = await cookies();
     cookieStore.set(SELECTED_ORGANIZATION_COOKIE, organizationId, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    // Same domain as the auth cookies: workspace and org-console are separate
-    // subdomains in production, and without this the selection written on one
-    // is invisible to the other.
-    domain: SHARED_COOKIE_DOMAIN,
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-  });
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      // Same domain as the auth cookies: workspace and org-console are separate
+      // subdomains in production, and without this the selection written on one
+      // is invisible to the other.
+      domain: SHARED_COOKIE_DOMAIN,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    });
 
   revalidatePath("/", "layout");
   return {};
