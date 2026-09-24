@@ -3,17 +3,16 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "./types";
+import { sharedCookieOptions } from "./cookies";
 
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
-  const cookieOptions =
-    process.env.NODE_ENV === "production" ? { domain: ".lecternapp.me" } : undefined;
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions,
+      cookieOptions: sharedCookieOptions,
       cookies: {
         getAll() {
           return cookieStore.getAll();

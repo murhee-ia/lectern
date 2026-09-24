@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerSupabaseClient } from "@repo/supabase/server";
-import { resolveOrganizationMembershipAction } from "@/lib/actions/auth/auth.actions";
+import { 
+  resolveOrganizationMembershipAction, 
+  importOAuthAvatarAction 
+} from "@/lib/actions/auth/auth.actions";
 import { resolveSafeRedirect } from "@repo/lib/utils/auth";
+
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -19,6 +23,8 @@ export async function GET(request: NextRequest) {
   if (error) {
     return NextResponse.redirect(new URL("/signin?error=oauth_failed", request.url));
   }
+
+  await importOAuthAvatarAction();
 
   const { joinedOrganizationId, joinCodeWasInvalid } = await resolveOrganizationMembershipAction(joinCode);
 

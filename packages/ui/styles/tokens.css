@@ -42,7 +42,7 @@
   --color-accent-foreground: var(--color-lectern-white);
   --color-card: var(--color-lectern-primary-purple);
   --color-card-foreground: var(--color-lectern-white);
-  --color-popover: var(--color-lectern-primary-purple);
+  --color-popover: var(--color-lectern-accent-purple);
   --color-popover-foreground: var(--color-lectern-white);
   --color-muted-foreground: var(--color-lectern-light-purple);
   --color-destructive: var(--color-lectern-danger-red);
@@ -70,4 +70,37 @@
   --radius-panel: 1.5rem;
   --shadow-glass: 0 8px 32px 0 rgb(0 0 0 / 0.35);
   --shadow-glass-sm: 0 4px 16px 0 rgb(0 0 0 / 0.25);
+}
+
+/* ---------------------------------------------------------------------
+ * shadcn raw-variable aliases.
+ * @theme above emits its tokens under their namespaced names
+ * (--color-popover, --color-border, ...) — that prefix is what generates
+ * the bg-popover / border-border utilities nearly every shadcn component
+ * uses. A few of them (sonner, chart, sidebar) skip the utilities and
+ * reference the unprefixed names inline instead. shadcn's own starter has
+ * both names because it declares the bare ones on :root and maps them in
+ * @theme; Lectern declares them once, so these aliases restore the second
+ * name those components expect — no second source of truth, just a rename.
+ * --------------------------------------------------------------------- */
+:root {
+  --background: var(--color-background);
+  --foreground: var(--color-foreground);
+  --card: var(--color-card);
+  --card-foreground: var(--color-card-foreground);
+  --popover: var(--color-popover);
+  --popover-foreground: var(--color-popover-foreground);
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-primary-foreground);
+  --secondary: var(--color-secondary);
+  --secondary-foreground: var(--color-secondary-foreground);
+  --muted: var(--color-muted);
+  --muted-foreground: var(--color-muted-foreground);
+  --accent: var(--color-accent);
+  --accent-foreground: var(--color-accent-foreground);
+  --destructive: var(--color-destructive);
+  --destructive-foreground: var(--color-destructive-foreground);
+  --border: var(--color-border);
+  --input: var(--color-input);
+  --ring: var(--color-ring);
 }
