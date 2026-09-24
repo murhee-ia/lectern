@@ -1,5 +1,8 @@
 @source "../components/**/*.{ts,tsx}";
 
+/* animate-in / fade-in-0 / zoom-in-95 … used by the shadcn primitives. */
+@import "tw-animate-css";
+
 @import "./tokens.css";
 @import "./base.css";
 @import "./glass.css";
