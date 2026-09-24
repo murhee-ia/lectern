@@ -6,7 +6,9 @@
   "types": "./index.ts",
   "exports": {
     ".": "./index.ts",
-    "./organization": "./organization/organization.types.ts"
+    "./auth": "./auth/auth.types.ts",
+    "./organization": "./organization/organization.types.ts",
+    "./session": "./session/session.types.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -18,5 +20,8 @@
     "@repo/typescript-config": "workspace:*",
     "typescript": "catalog:",
     "eslint": "catalog:"
+  },
+  "dependencies": {
+    "@repo/supabase": "workspace:*"
   }
 }
