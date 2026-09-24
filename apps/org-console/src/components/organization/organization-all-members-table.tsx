@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
 import {
   createSortedRowModel,
   rowSortingFeature,
   tableFeatures,
   useTable,
-} from "@tanstack/react-table";
-import type { ColumnDef } from "@tanstack/react-table";
+} from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 
-import type { OrganizationMember } from "@repo/types/organization";
+import type { OrganizationMember } from '@repo/types/organization';
 
 const features = tableFeatures({
   rowSortingFeature,
@@ -17,25 +17,29 @@ const features = tableFeatures({
 
 const columns: Array<ColumnDef<typeof features, OrganizationMember>> = [
   {
-    accessorKey: "email",
-    header: "Member",
+    accessorKey: 'email',
+    header: 'Member',
     cell: (info) => info.getValue(),
   },
   {
-    accessorKey: "role",
-    header: "Role",
+    accessorKey: 'role',
+    header: 'Role',
     cell: (info) => <span className="badge">{info.getValue<string>()}</span>,
   },
   {
-    accessorKey: "joinedAt",
-    header: "Joined",
+    accessorKey: 'joinedAt',
+    header: 'Joined',
     cell: (info) => new Date(info.getValue<string>()).toLocaleDateString(),
   },
 ];
 
-export function OrganizationAllMembersTable({ members }: { members: OrganizationMember[] }) {
+export function OrganizationAllMembersTable({
+  members,
+}: {
+  members: OrganizationMember[];
+}) {
   const table = useTable({
-    key: "organization-member-table",
+    key: 'organization-member-table',
     features,
     columns,
     data: members,
@@ -52,9 +56,12 @@ export function OrganizationAllMembersTable({ members }: { members: Organization
                 className="cursor-pointer pb-3 font-semibold select-none"
                 onClick={header.column.getToggleSortingHandler()}
               >
-                {header.isPlaceholder ? null : <table.FlexRender header={header} />}
-                {{ asc: " ▲", desc: " ▼" }[header.column.getIsSorted() as string] ??
-                  null}
+                {header.isPlaceholder ? null : (
+                  <table.FlexRender header={header} />
+                )}
+                {{ asc: ' ▲', desc: ' ▼' }[
+                  header.column.getIsSorted() as string
+                ] ?? null}
               </th>
             ))}
           </tr>

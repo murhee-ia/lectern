@@ -1,1 +1,1 @@
-export { default } from "@repo/eslint-config/prettier-preset.mjs";
+export { default } from '@repo/eslint-config/prettier-preset.mjs';

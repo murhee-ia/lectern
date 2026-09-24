@@ -1,14 +1,24 @@
-import { FileText, AudioLines, Link2, Users } from "lucide-react";
-import { LecternLogo } from "@repo/ui/components/brand/lectern-logo";
+import { FileText, AudioLines, Link2, Users } from 'lucide-react';
+import { LecternLogo } from '@repo/ui/components/brand/lectern-logo';
 
 const PITCH_FEATURES = [
-  { icon: FileText, text: "Reads the whole document, not indexed snippets" },
-  { icon: AudioLines, text: "Spoken, turn-by-turn — jump in and redirect anytime" },
-  { icon: Link2, text: "Every claim traceable to a live source" },
-  { icon: Users, text: "Team sessions — one presenter, an audience that listens" },
+  { icon: FileText, text: 'Reads the whole document, not indexed snippets' },
+  {
+    icon: AudioLines,
+    text: 'Spoken, turn-by-turn — jump in and redirect anytime',
+  },
+  { icon: Link2, text: 'Every claim traceable to a live source' },
+  {
+    icon: Users,
+    text: 'Team sessions — one presenter, an audience that listens',
+  },
 ];
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div className="relative flex flex-1 overflow-hidden">
       {/* Soft color glows across the page. Purple leads; yellow pop. */}
@@ -23,14 +33,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="max-w-xl">
           <span className="section-eyebrow">AI explainer, not a chatbot</span>
           <h1 className="mt-6 font-heading text-5xl font-semibold tracking-tight text-foreground xl:text-6xl">
-            Give it a file or a topic.{" "}
+            Give it a file or a topic.{' '}
             <span className="bg-gradient-to-r from-highlight to-highlight-secondary bg-clip-text text-transparent">
               Lectern reads, researches, and explains it out loud.
             </span>
           </h1>
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-foreground/70">
-            Live captions. Cited sources. A real conversation you can interrupt —
-            solo, or with your whole team listening in.
+            Live captions. Cited sources. A real conversation you can interrupt
+            — solo, or with your whole team listening in.
           </p>
 
           <ul className="mt-14 flex flex-col gap-7">
@@ -39,7 +49,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-lectern-white/10 bg-lectern-accent-purple/40 text-highlight">
                   <Icon className="size-5" />
                 </span>
-                <span className="mt-2 text-base text-foreground/80">{text}</span>
+                <span className="mt-2 text-base text-foreground/80">
+                  {text}
+                </span>
               </li>
             ))}
           </ul>
@@ -70,9 +82,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           />
           <div className="glass-card relative overflow-hidden border-lectern-white/20 shadow-[0_30px_90px_-25px_rgba(61,24,105,0.7)] backdrop-blur-2xl backdrop-saturate-150">
             <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-highlight to-transparent" />
-            <div className="relative">
-              {children}
-            </div>
+            <div className="relative">{children}</div>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import type { WorkspaceOrganizationMembership } from "@repo/types/organization";
-import { useSelectedOrganizationId } from "@/lib/hooks/use-selected-organization-id";
+import type { WorkspaceOrganizationMembership } from '@repo/types/organization';
+import { useSelectedOrganizationId } from '@/lib/hooks/use-selected-organization-id';
 
 export function OrganizationSummaryCard({
   organizations,

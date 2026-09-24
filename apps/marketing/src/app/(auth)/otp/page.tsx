@@ -1,4 +1,4 @@
-import { SignInOtpForm } from "@/components/auth/signin-otp-form";
+import { SignInOtpForm } from '@/components/auth/signin-otp-form';
 
 export default async function OtpPage({
   searchParams,

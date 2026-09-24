@@ -1,2 +1,2 @@
-import sharedConfig from "./eslint-preset.mjs";
+import sharedConfig from './eslint-preset.mjs';
 export default sharedConfig;

@@ -1,0 +1,8 @@
+# Every text file is stored with LF and checked out with LF, whatever each
+# contributor's core.autocrlf happens to be. Without this the line endings a
+# file lands with depend on who cloned it — the cause of the "LF will be
+# replaced by CRLF" warning on nearly every git command here.
+* text=auto eol=lf
+
+packages/supabase/types.ts linguist-generated=true
+pnpm-lock.yaml             linguist-generated=true

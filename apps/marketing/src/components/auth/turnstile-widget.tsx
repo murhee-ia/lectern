@@ -1,8 +1,12 @@
-"use client";
+'use client';
 
-import { Turnstile } from "@marsidev/react-turnstile";
+import { Turnstile } from '@marsidev/react-turnstile';
 
-export function TurnstileWidget({ onToken }: { onToken: (token: string | null) => void }) {
+export function TurnstileWidget({
+  onToken,
+}: {
+  onToken: (token: string | null) => void;
+}) {
   return (
     <Turnstile
       siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}

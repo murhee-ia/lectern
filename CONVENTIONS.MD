@@ -1,8 +1,8 @@
 # Lectern — Code Organization Conventions
 
-Purpose-first, not feature-first: one fixed top-level folder per *kind* of
+Purpose-first, not feature-first: one fixed top-level folder per _kind_ of
 code (actions, components, stores, etc.), each divided internally by
-*feature label* (auth, organization, session, ...). This is a deliberate
+_feature label_ (auth, organization, session, ...). This is a deliberate
 choice over a `features/<name>/` structure — pick a purpose folder first,
 then a feature subfolder inside it, always in that order.
 
@@ -19,19 +19,19 @@ these exact spellings — never an abbreviation, never a synonym. Traceable
 directly to `lectern-feature-flows.md`'s own section headers, so "which
 folder does this belong in" always has one unambiguous answer.
 
-| Feature label | Feature-flows.md section | Covers |
-|---|---|---|
-| `auth` | AUTH | signup, sign-in, OTP, OAuth, confirmation, password reset, sign-out, account deletion |
-| `organization` | ORG | org settings, members, invites, join code, admin handoff |
-| `session` | SESSION | personal/team sessions, live conversation, floor control |
-| `library` | LIB | personal/shared library items, notes |
-| `board` | BOARD | request board |
-| `notification` | NOTIF | transactional/announcement email, in-app bell |
-| `drive` | DRIVE | Google Drive import |
-| `billing` | BILLING | plans, Stripe |
-| `admin` | ADMIN | superadmin console |
-| `legal` | LEGAL | disclaimers, compliance copy |
-| `shared` | — (not a doc section) | genuinely cross-feature code used by 2+ labels above, within one app. If it's used across *apps*, it belongs in `packages/ui` or `packages/types` instead, not here. |
+| Feature label  | Feature-flows.md section | Covers                                                                                                                                                               |
+| -------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth`         | AUTH                     | signup, sign-in, OTP, OAuth, confirmation, password reset, sign-out, account deletion                                                                                |
+| `organization` | ORG                      | org settings, members, invites, join code, admin handoff                                                                                                             |
+| `session`      | SESSION                  | personal/team sessions, live conversation, floor control                                                                                                             |
+| `library`      | LIB                      | personal/shared library items, notes                                                                                                                                 |
+| `board`        | BOARD                    | request board                                                                                                                                                        |
+| `notification` | NOTIF                    | transactional/announcement email, in-app bell                                                                                                                        |
+| `drive`        | DRIVE                    | Google Drive import                                                                                                                                                  |
+| `billing`      | BILLING                  | plans, Stripe                                                                                                                                                        |
+| `admin`        | ADMIN                    | superadmin console                                                                                                                                                   |
+| `legal`        | LEGAL                    | disclaimers, compliance copy                                                                                                                                         |
+| `shared`       | — (not a doc section)    | genuinely cross-feature code used by 2+ labels above, within one app. If it's used across _apps_, it belongs in `packages/ui` or `packages/types` instead, not here. |
 
 Never invent a new label without adding it to this table first. Never use
 `org`, `notif`, `lib`, or any other shortened form — same "spell it out"
@@ -48,7 +48,7 @@ src/
                 No components, no helpers, no logic colocated here.
                 Route groups (auth) group pages that share a layout
                 without affecting the URL. Plain folders (auth/confirm)
-                are real URL segments. `page.tsx` and `layout.tsx` 
+                are real URL segments. `page.tsx` and `layout.tsx`
                 are always Server Components — never put
                 `"use client"` on one. Any interactivity (state, event handlers, browser
                 APIs) belongs in a Client Component under `components/<feature>/`,
@@ -91,7 +91,7 @@ Zustand serves two genuinely different jobs in this codebase, distinguished
 by one question: **does this state's correct starting value depend on
 per-request server data, or is it always the same constant regardless of
 who's asking?** That answer determines which of two category folders a
-store belongs in — divided by *category* first, not by feature label the
+store belongs in — divided by _category_ first, not by feature label the
 way every other purpose folder is, because the category is what determines
 the store's entire shape and risk profile, not which feature it happens to
 belong to.
@@ -112,15 +112,15 @@ lib/
   every user, every request, forever (`isOpen: false`, `type: null`). No
   server counterpart exists, so there's nothing to seed from a request or
   reconcile against — a plain `create()` is enough. This will be the
-  *majority* of Zustand usage in Lectern going forward (a delete-confirm
+  _majority_ of Zustand usage in Lectern going forward (a delete-confirm
   modal, an invite-member dialog, ...). Shape:
 
   ```ts
-  "use client";
+  'use client';
 
-  import { create } from "zustand";
+  import { create } from 'zustand';
 
-  export type SomeModalType = "createX" | "editX" | "deleteX";
+  export type SomeModalType = 'createX' | 'editX' | 'deleteX';
 
   type SomeModalStore = {
     type: SomeModalType | null;
@@ -178,7 +178,7 @@ lib/
   safe by construction, not by convention — `useEffect` never runs during
   server rendering, so the store is provably untouched (`null`) on every
   server render and the client's first hydration pass. That means the
-  fallback is *always* what gets used for those two cases, with no
+  fallback is _always_ what gets used for those two cases, with no
   hydration mismatch possible and no risk of one request's value leaking
   into another's server-rendered output on a long-lived server process.
 
@@ -199,14 +199,14 @@ category split applies there too.
   — in a fuzzy-file-switcher, in `grep`, in a PR diff list — independent of
   which folder it's sitting in:
 
-  | Purpose | Suffix | Example |
-  |---|---|---|
-  | Server actions (reads and writes both) | `.actions.ts` (plural — one file holds every action for that feature by default) | `actions/auth/auth.actions.ts` |
-  | Zod schemas | `.schemas.ts` (plural, same "one file per feature by default" rule) | `lib/schemas/auth/auth.schemas.ts` |
-  | Zustand stores | `.store.ts` (one file per distinct piece of state) | `lib/stores/server-mirror-stores/selected-organization.store.ts` |
-  | Local types | `.types.ts` | `types/organization/organization.types.ts` |
-  | Route handler | `route.ts` (framework-mandated, not our choice) | `app/auth/confirm/route.ts` |
-  | `supabase/` exception, if ever used | `.query.ts` for a read, `.mutation.ts` for a write | `supabase/auth/some-middleware-only-check.query.ts` |
+  | Purpose                                | Suffix                                                                           | Example                                                          |
+  | -------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+  | Server actions (reads and writes both) | `.actions.ts` (plural — one file holds every action for that feature by default) | `actions/auth/auth.actions.ts`                                   |
+  | Zod schemas                            | `.schemas.ts` (plural, same "one file per feature by default" rule)              | `lib/schemas/auth/auth.schemas.ts`                               |
+  | Zustand stores                         | `.store.ts` (one file per distinct piece of state)                               | `lib/stores/server-mirror-stores/selected-organization.store.ts` |
+  | Local types                            | `.types.ts`                                                                      | `types/organization/organization.types.ts`                       |
+  | Route handler                          | `route.ts` (framework-mandated, not our choice)                                  | `app/auth/confirm/route.ts`                                      |
+  | `supabase/` exception, if ever used    | `.query.ts` for a read, `.mutation.ts` for a write                               | `supabase/auth/some-middleware-only-check.query.ts`              |
 
 - **`lib/utils/`, `components/`, `hooks/` — no suffix.** A util is just a
   function; its folder (`lib/utils/<feature>/`) already says everything the
@@ -290,11 +290,11 @@ internally, never accepts one as a parameter.
 
 - **`packages/ui/components/ui/`** — shadcn/ui primitives (Button, Input,
   Label, ...). Generic design-system building blocks with zero product
-  knowledge, shared by every app via `@repo/ui/components/ui/<name>`. Only 
-  ever touched via pnpm dlx shadcn@latest add <name> (run from inside 
-  packages/ui) — brand colors resolve automatically via the shadcn theme 
-  tokens in styles/tokens.css, so no per-component color editing is expected. 
-  A shape/sizing tweak (like Button's rounded-full) is the one legitimate 
+  knowledge, shared by every app via `@repo/ui/components/ui/<name>`. Only
+  ever touched via pnpm dlx shadcn@latest add <name> (run from inside
+  packages/ui) — brand colors resolve automatically via the shadcn theme
+  tokens in styles/tokens.css, so no per-component color editing is expected.
+  A shape/sizing tweak (like Button's rounded-full) is the one legitimate
   exception. Never write a new primitive by hand here.
 - **`packages/ui/components/customs/`** — cross-app compositions that use
   those primitives but carry a little product logic (e.g. `SignOutButton`
@@ -303,7 +303,7 @@ internally, never accepts one as a parameter.
   it in the stack). Same promotion rule as everything else in this
   section — only once genuinely needed by 2+ apps identically.
 - **`apps/<name>/src/components/<feature>/`** — feature-specific
-  compositions that *use* those primitives (e.g. `DeleteAccountButton`
+  compositions that _use_ those primitives (e.g. `DeleteAccountButton`
   renders a shadcn `Button` with `variant="destructive"` plus this
   product's confirm-twice flow). These stay app-local per §1/§2 — a
   composition belonging to one app's `auth` feature has no reason to be

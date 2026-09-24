@@ -3,12 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-      "./cookies": "./cookies.ts",
-      "./browser": "./browser.ts",
-      "./server": "./server.ts",
-      "./admin": "./admin.ts",
-      "./middleware": "./middleware.ts",
-      "./types": "./types.ts"
+    "./cookies": "./cookies.ts",
+    "./browser": "./browser.ts",
+    "./server": "./server.ts",
+    "./admin": "./admin.ts",
+    "./middleware": "./middleware.ts",
+    "./types": "./types.ts"
   },
   "scripts": {
     "lint": "eslint .",

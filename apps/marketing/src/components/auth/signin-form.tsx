@@ -1,23 +1,22 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Mail, Lock } from "lucide-react";
-import { useForm } from "@tanstack/react-form";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Mail, Lock } from 'lucide-react';
+import { useForm } from '@tanstack/react-form';
 
-import { Button } from "@repo/ui/components/ui/button";
-import { Input } from "@repo/ui/components/ui/input";
-import { Label } from "@repo/ui/components/ui/label";
-import { VoiceWaveform } from "@repo/ui/components/brand/voice-waveform";
-import { signInSchema } from "@repo/lib/schemas/auth";
-import { resolveSafeRedirect } from "@repo/lib/utils/auth";
-import { createBrowserSupabaseClient } from "@repo/supabase/browser";
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { VoiceWaveform } from '@repo/ui/components/brand/voice-waveform';
+import { signInSchema } from '@repo/lib/schemas/auth';
+import { resolveSafeRedirect } from '@repo/lib/utils/auth';
+import { createBrowserSupabaseClient } from '@repo/supabase/browser';
 
-import { TurnstileWidget } from "@/components/auth/turnstile-widget";
-import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { TurnstileWidget } from '@/components/auth/turnstile-widget';
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 
 export function SignInForm({ next }: { next?: string }) {
-
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,8 +24,8 @@ export function SignInForm({ next }: { next?: string }) {
 
   const form = useForm({
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
     validators: {
       onChange: signInSchema,
@@ -36,7 +35,7 @@ export function SignInForm({ next }: { next?: string }) {
       setUnconfirmed(false);
 
       if (!turnstileToken) {
-        setError("Please complete the verification challenge.");
+        setError('Please complete the verification challenge.');
         return;
       }
 
@@ -48,7 +47,7 @@ export function SignInForm({ next }: { next?: string }) {
       });
 
       if (signInError) {
-        if (signInError.message.toLowerCase().includes("confirm")) {
+        if (signInError.message.toLowerCase().includes('confirm')) {
           setUnconfirmed(true);
         } else {
           setError(signInError.message);
@@ -56,14 +55,20 @@ export function SignInForm({ next }: { next?: string }) {
         return;
       }
 
-      window.location.href = resolveSafeRedirect(next, process.env.NEXT_PUBLIC_WORKSPACE_URL!);
+      window.location.href = resolveSafeRedirect(
+        next,
+        process.env.NEXT_PUBLIC_WORKSPACE_URL!,
+      );
     },
   });
 
   const handleResendConfirmation = async () => {
     const supabase = createBrowserSupabaseClient();
-    await supabase.auth.resend({ type: "signup", email: form.state.values.email });
-    setError("Confirmation email resent. Check your inbox.");
+    await supabase.auth.resend({
+      type: 'signup',
+      email: form.state.values.email,
+    });
+    setError('Confirmation email resent. Check your inbox.');
     setUnconfirmed(false);
   };
 
@@ -74,8 +79,12 @@ export function SignInForm({ next }: { next?: string }) {
         <VoiceWaveform />
       </div>
       <p className="mt-4 text-center text-sm text-foreground/70">
-        New here?{" "}
-        <Button variant="link" className="h-auto p-0" onClick={() => router.push("/signup")}>
+        New here?{' '}
+        <Button
+          variant="link"
+          className="h-auto p-0"
+          onClick={() => router.push('/signup')}
+        >
           Create an account
         </Button>
       </p>
@@ -101,12 +110,22 @@ export function SignInForm({ next }: { next?: string }) {
                 placeholder="you@example.com"
                 value={field.state.value}
                 onBlur={field.handleBlur}
-                onChange={(changeEvent) => field.handleChange(changeEvent.target.value)}
-                aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}
+                onChange={(changeEvent) =>
+                  field.handleChange(changeEvent.target.value)
+                }
+                aria-invalid={
+                  field.state.meta.isTouched &&
+                  field.state.meta.errors.length > 0
+                }
               />
-              {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
-                <p className="text-sm text-destructive">{field.state.meta.errors.map((fieldError) => fieldError?.message ?? fieldError).join(", ")}</p>
-              )}
+              {field.state.meta.isTouched &&
+                field.state.meta.errors.length > 0 && (
+                  <p className="text-sm text-destructive">
+                    {field.state.meta.errors
+                      .map((fieldError) => fieldError?.message ?? fieldError)
+                      .join(', ')}
+                  </p>
+                )}
             </div>
           )}
         </form.Field>
@@ -123,20 +142,34 @@ export function SignInForm({ next }: { next?: string }) {
                 placeholder="Enter your password"
                 value={field.state.value}
                 onBlur={field.handleBlur}
-                onChange={(changeEvent) => field.handleChange(changeEvent.target.value)}
-                aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}
+                onChange={(changeEvent) =>
+                  field.handleChange(changeEvent.target.value)
+                }
+                aria-invalid={
+                  field.state.meta.isTouched &&
+                  field.state.meta.errors.length > 0
+                }
               />
-              {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
-                <p className="text-sm text-destructive">{field.state.meta.errors.map((fieldError) => fieldError?.message ?? fieldError).join(", ")}</p>
-              )}
+              {field.state.meta.isTouched &&
+                field.state.meta.errors.length > 0 && (
+                  <p className="text-sm text-destructive">
+                    {field.state.meta.errors
+                      .map((fieldError) => fieldError?.message ?? fieldError)
+                      .join(', ')}
+                  </p>
+                )}
             </div>
           )}
         </form.Field>
         <TurnstileWidget onToken={setTurnstileToken} />
         {unconfirmed && (
           <p className="text-sm text-highlight">
-            Your account isn&apos;t confirmed yet.{" "}
-            <Button variant="link" className="h-auto p-0" onClick={handleResendConfirmation}>
+            Your account isn&apos;t confirmed yet.{' '}
+            <Button
+              variant="link"
+              className="h-auto p-0"
+              onClick={handleResendConfirmation}
+            >
               Resend confirmation email
             </Button>
           </p>
@@ -144,23 +177,29 @@ export function SignInForm({ next }: { next?: string }) {
         {error && <p className="text-sm text-destructive">{error}</p>}
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" className="w-full" disabled={isSubmitting || !turnstileToken}>
-              {isSubmitting ? "Signing in…" : "Sign in"}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting || !turnstileToken}
+            >
+              {isSubmitting ? 'Signing in…' : 'Sign in'}
             </Button>
           )}
         </form.Subscribe>
       </form>
       <div className="my-5 flex items-center gap-3">
         <div className="h-px flex-1 bg-lectern-white/10" />
-        <span className="text-xs font-medium tracking-wide text-foreground/50 uppercase">or</span>
+        <span className="text-xs font-medium tracking-wide text-foreground/50 uppercase">
+          or
+        </span>
         <div className="h-px flex-1 bg-lectern-white/10" />
       </div>
       <GoogleSignInButton next={next} />
       <p className="mt-4 text-center text-sm">
-        <Button 
-          variant="link" 
+        <Button
+          variant="link"
           className="h-auto p-0"
-          onClick={() => router.push("/otp")}
+          onClick={() => router.push('/otp')}
         >
           Sign in with an email code instead
         </Button>
@@ -169,7 +208,7 @@ export function SignInForm({ next }: { next?: string }) {
         <Button
           variant="link"
           className="h-auto p-0"
-          onClick={() => router.push("/reset-password")}
+          onClick={() => router.push('/reset-password')}
         >
           Forgot your password?
         </Button>

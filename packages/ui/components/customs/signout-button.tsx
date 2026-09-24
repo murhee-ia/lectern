@@ -1,4 +1,4 @@
-import { Button } from "@repo/ui/components/ui/button";
+import { Button } from '@repo/ui/components/ui/button';
 
 export function SignOutButton({ action }: { action: () => Promise<void> }) {
   return (

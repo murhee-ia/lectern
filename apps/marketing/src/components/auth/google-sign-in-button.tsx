@@ -1,24 +1,34 @@
-"use client";
+'use client';
 
-import { createBrowserSupabaseClient } from "@repo/supabase/browser";
-import { Button } from "@repo/ui/components/ui/button";
+import { createBrowserSupabaseClient } from '@repo/supabase/browser';
+import { Button } from '@repo/ui/components/ui/button';
 
-export function GoogleSignInButton({ joinCode, next }: { joinCode?: string; next?: string }) {
-
+export function GoogleSignInButton({
+  joinCode,
+  next,
+}: {
+  joinCode?: string;
+  next?: string;
+}) {
   const handleClick = async () => {
-    const redirectTo = new URL("/auth/callback", window.location.origin);
-    if (joinCode) redirectTo.searchParams.set("join_code", joinCode);
-    if (next) redirectTo.searchParams.set("next", next);
+    const redirectTo = new URL('/auth/callback', window.location.origin);
+    if (joinCode) redirectTo.searchParams.set('join_code', joinCode);
+    if (next) redirectTo.searchParams.set('next', next);
 
     const supabase = createBrowserSupabaseClient();
     await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider: 'google',
       options: { redirectTo: redirectTo.toString() },
     });
   };
 
   return (
-    <Button type="button" variant="secondary" className="w-full" onClick={handleClick}>
+    <Button
+      type="button"
+      variant="secondary"
+      className="w-full"
+      onClick={handleClick}
+    >
       <svg viewBox="0 0 18 18" className="size-4" aria-hidden>
         <path
           fill="#4285F4"

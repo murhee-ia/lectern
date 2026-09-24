@@ -1,6 +1,6 @@
-import { createBrowserClient } from "@supabase/ssr";
-import type { Database } from "./types";
-import { sharedCookieOptions } from "./cookies";
+import { createBrowserClient } from '@supabase/ssr';
+import type { Database } from './types';
+import { sharedCookieOptions } from './cookies';
 
 export function createBrowserSupabaseClient() {
   return createBrowserClient<Database>(
@@ -8,8 +8,6 @@ export function createBrowserSupabaseClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookieOptions: sharedCookieOptions,
-    }
-  )
+    },
+  );
 }
-
-

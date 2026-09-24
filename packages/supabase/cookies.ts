@@ -8,7 +8,8 @@
  */
 const configuredCookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN?.trim();
 
-export const SHARED_COOKIE_DOMAIN: string | undefined = configuredCookieDomain || undefined;
+export const SHARED_COOKIE_DOMAIN: string | undefined =
+  configuredCookieDomain || undefined;
 
 export const sharedCookieOptions = SHARED_COOKIE_DOMAIN
   ? { domain: SHARED_COOKIE_DOMAIN }

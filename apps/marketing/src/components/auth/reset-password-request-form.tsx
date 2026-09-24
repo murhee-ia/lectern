@@ -1,29 +1,28 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Mail } from "lucide-react";
-import { useForm } from "@tanstack/react-form";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Mail } from 'lucide-react';
+import { useForm } from '@tanstack/react-form';
 
-import { Button } from "@repo/ui/components/ui/button";
-import { Input } from "@repo/ui/components/ui/input";
-import { Label } from "@repo/ui/components/ui/label";
-import { VoiceWaveform } from "@repo/ui/components/brand/voice-waveform";
-import { resetPasswordRequestSchema } from "@repo/lib/schemas/auth";
-import { createBrowserSupabaseClient } from "@repo/supabase/browser";
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { VoiceWaveform } from '@repo/ui/components/brand/voice-waveform';
+import { resetPasswordRequestSchema } from '@repo/lib/schemas/auth';
+import { createBrowserSupabaseClient } from '@repo/supabase/browser';
 
-import { TurnstileWidget } from "@/components/auth/turnstile-widget";
+import { TurnstileWidget } from '@/components/auth/turnstile-widget';
 
 export function ResetPasswordRequestForm() {
-
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState("");
+  const [submittedEmail, setSubmittedEmail] = useState('');
 
   const form = useForm({
-    defaultValues: { email: "" },
+    defaultValues: { email: '' },
     validators: {
       onChange: resetPasswordRequestSchema,
     },
@@ -31,34 +30,39 @@ export function ResetPasswordRequestForm() {
       setError(null);
 
       if (!turnstileToken) {
-        setError("Please complete the verification challenge.");
+        setError('Please complete the verification challenge.');
         return;
       }
 
       const data = resetPasswordRequestSchema.parse(value);
-      const redirectTo = new URL("/reset-password/update", window.location.origin);
+      const redirectTo = new URL(
+        '/reset-password/update',
+        window.location.origin,
+      );
 
       const supabase = createBrowserSupabaseClient();
       try {
         const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-          data.email, 
+          data.email,
           {
             redirectTo: redirectTo.toString(),
             captchaToken: turnstileToken,
-          }
+          },
         );
 
         if (resetError) {
-          console.error("resetPasswordForEmail returned an error:", resetError);
+          console.error('resetPasswordForEmail returned an error:', resetError);
           setError(resetError.message);
           return;
         }
-        
+
         setSubmittedEmail(data.email);
         setSent(true);
       } catch (thrownError) {
-        console.error("resetPasswordForEmail threw:", thrownError);
-        setError(thrownError instanceof Error ? thrownError.message : "Unknown error");
+        console.error('resetPasswordForEmail threw:', thrownError);
+        setError(
+          thrownError instanceof Error ? thrownError.message : 'Unknown error',
+        );
       }
     },
   });
@@ -81,8 +85,12 @@ export function ResetPasswordRequestForm() {
         <VoiceWaveform />
       </div>
       <p className="mt-4 text-center text-sm text-foreground/70">
-        Remembered it?{" "}
-        <Button variant="link" className="h-auto p-0" onClick={() => router.push("/signin")}>
+        Remembered it?{' '}
+        <Button
+          variant="link"
+          className="h-auto p-0"
+          onClick={() => router.push('/signin')}
+        >
           Sign in
         </Button>
       </p>
@@ -108,12 +116,22 @@ export function ResetPasswordRequestForm() {
                 placeholder="you@example.com"
                 value={field.state.value}
                 onBlur={field.handleBlur}
-                onChange={(changeEvent) => field.handleChange(changeEvent.target.value)}
-                aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}
+                onChange={(changeEvent) =>
+                  field.handleChange(changeEvent.target.value)
+                }
+                aria-invalid={
+                  field.state.meta.isTouched &&
+                  field.state.meta.errors.length > 0
+                }
               />
-              {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
-                <p className="text-sm text-destructive">{field.state.meta.errors.map((fieldError) => fieldError?.message ?? fieldError).join(", ")}</p>
-              )}
+              {field.state.meta.isTouched &&
+                field.state.meta.errors.length > 0 && (
+                  <p className="text-sm text-destructive">
+                    {field.state.meta.errors
+                      .map((fieldError) => fieldError?.message ?? fieldError)
+                      .join(', ')}
+                  </p>
+                )}
             </div>
           )}
         </form.Field>
@@ -121,8 +139,12 @@ export function ResetPasswordRequestForm() {
         {error && <p className="text-sm text-destructive">{error}</p>}
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" className="w-full" disabled={isSubmitting || !turnstileToken}>
-              {isSubmitting ? "Sending…" : "Send reset link"}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting || !turnstileToken}
+            >
+              {isSubmitting ? 'Sending…' : 'Send reset link'}
             </Button>
           )}
         </form.Subscribe>

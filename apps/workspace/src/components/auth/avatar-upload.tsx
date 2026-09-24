@@ -1,14 +1,17 @@
-"use client";
+'use client';
 
-import { useRef, useState, useTransition, type ChangeEvent } from "react";
-import { useRouter } from "next/navigation";
-import { Camera } from "lucide-react";
+import { useRef, useState, useTransition, type ChangeEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { Camera } from 'lucide-react';
 
-import { Button } from "@repo/ui/components/ui/button";
-import { AVATAR_ALLOWED_MIME_TYPES, AVATAR_MAX_BYTES } from "@repo/lib/schemas/profile";
-import { createBrowserSupabaseClient } from "@repo/supabase/browser";
+import { Button } from '@repo/ui/components/ui/button';
+import {
+  AVATAR_ALLOWED_MIME_TYPES,
+  AVATAR_MAX_BYTES,
+} from '@repo/lib/schemas/profile';
+import { createBrowserSupabaseClient } from '@repo/supabase/browser';
 
-import { setAvatarAction } from "@/lib/actions/auth/auth.actions";
+import { setAvatarAction } from '@/lib/actions/auth/auth.actions';
 
 export function AvatarUpload({
   userId,
@@ -31,30 +34,37 @@ export function AvatarUpload({
     .filter(Boolean)
     .map((part) => part[0])
     .slice(0, 2)
-    .join("")
+    .join('')
     .toUpperCase();
 
   const handleFileChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     const file = changeEvent.target.files?.[0];
-    changeEvent.target.value = "";
+    changeEvent.target.value = '';
     if (!file) return;
 
     setError(null);
 
-    if (!AVATAR_ALLOWED_MIME_TYPES.includes(file.type as (typeof AVATAR_ALLOWED_MIME_TYPES)[number])) {
-      setError("Please choose a PNG, JPEG, or WebP image.");
+    if (
+      !AVATAR_ALLOWED_MIME_TYPES.includes(
+        file.type as (typeof AVATAR_ALLOWED_MIME_TYPES)[number],
+      )
+    ) {
+      setError('Please choose a PNG, JPEG, or WebP image.');
       return;
     }
     if (file.size > AVATAR_MAX_BYTES) {
-      setError("Image must be 5MB or smaller.");
+      setError('Image must be 5MB or smaller.');
       return;
     }
 
     startTransition(async () => {
       const supabase = createBrowserSupabaseClient();
       const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(`${userId}/avatar`, file, { upsert: true, contentType: file.type });
+        .from('avatars')
+        .upload(`${userId}/avatar`, file, {
+          upsert: true,
+          contentType: file.type,
+        });
 
       if (uploadError) {
         setError(uploadError.message);
@@ -81,9 +91,13 @@ export function AvatarUpload({
         <div className="flex size-16 items-center justify-center overflow-hidden rounded-full border border-lectern-white/15 bg-lectern-white/10 text-lg font-semibold text-foreground">
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- a user-uploaded image so can't use next/image
-            <img src={avatarUrl} alt="profile-avatar" className="size-full object-cover" />
+            <img
+              src={avatarUrl}
+              alt="profile-avatar"
+              className="size-full object-cover"
+            />
           ) : (
-            initials || "?"
+            initials || '?'
           )}
         </div>
         <button
@@ -98,7 +112,7 @@ export function AvatarUpload({
         <input
           ref={fileInputRef}
           type="file"
-          accept={AVATAR_ALLOWED_MIME_TYPES.join(",")}
+          accept={AVATAR_ALLOWED_MIME_TYPES.join(',')}
           className="hidden"
           onChange={handleFileChange}
         />
@@ -111,7 +125,7 @@ export function AvatarUpload({
           onClick={() => fileInputRef.current?.click()}
           disabled={isPending}
         >
-          {isPending ? "Uploading…" : "Change photo"}
+          {isPending ? 'Uploading…' : 'Change photo'}
         </Button>
         {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
       </div>

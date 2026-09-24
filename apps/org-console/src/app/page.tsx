@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { getWorkspaceOrganizationsAction } from "@repo/server/organization";
+import Link from 'next/link';
+import { getWorkspaceOrganizationsAction } from '@repo/server/organization';
 
 export default async function OrgConsolePage() {
   const { organizations } = await getWorkspaceOrganizationsAction();
@@ -10,11 +10,13 @@ export default async function OrgConsolePage() {
 
       <div className="mt-8 space-y-3">
         {organizations.map((organization) => {
-          const isAdmin = organization.role === "admin";
+          const isAdmin = organization.role === 'admin';
           const content = (
             <>
               <div>
-                <p className="font-semibold text-foreground">{organization.name}</p>
+                <p className="font-semibold text-foreground">
+                  {organization.name}
+                </p>
                 <span className="badge badge-highlight mt-1 inline-flex capitalize">
                   {organization.plan} plan
                 </span>

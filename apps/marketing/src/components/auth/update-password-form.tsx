@@ -1,23 +1,22 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Lock } from "lucide-react";
-import { useForm } from "@tanstack/react-form";
+import { useState } from 'react';
+import { Lock } from 'lucide-react';
+import { useForm } from '@tanstack/react-form';
 
-import { Button } from "@repo/ui/components/ui/button";
-import { Input } from "@repo/ui/components/ui/input";
-import { Label } from "@repo/ui/components/ui/label";
-import { VoiceWaveform } from "@repo/ui/components/brand/voice-waveform";
-import { updatePasswordSchema } from "@repo/lib/schemas/auth";
-import { createBrowserSupabaseClient } from "@repo/supabase/browser";
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { VoiceWaveform } from '@repo/ui/components/brand/voice-waveform';
+import { updatePasswordSchema } from '@repo/lib/schemas/auth';
+import { createBrowserSupabaseClient } from '@repo/supabase/browser';
 
 export function UpdatePasswordForm() {
-  
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
   const form = useForm({
-    defaultValues: { password: "" },
+    defaultValues: { password: '' },
     validators: {
       onChange: updatePasswordSchema,
     },
@@ -25,7 +24,9 @@ export function UpdatePasswordForm() {
       setError(null);
       const data = updatePasswordSchema.parse(value);
       const supabase = createBrowserSupabaseClient();
-      const { error: updateError } = await supabase.auth.updateUser({ password: data.password });
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: data.password,
+      });
 
       if (updateError) {
         setError(updateError.message);
@@ -40,7 +41,9 @@ export function UpdatePasswordForm() {
       <div className="text-center">
         <h1 className="heading-3">Password updated</h1>
         <Button asChild className="mt-4">
-          <a href={process.env.NEXT_PUBLIC_WORKSPACE_URL}>Continue to Lectern</a>
+          <a href={process.env.NEXT_PUBLIC_WORKSPACE_URL}>
+            Continue to Lectern
+          </a>
         </Button>
       </div>
     );
@@ -77,12 +80,22 @@ export function UpdatePasswordForm() {
                 placeholder="At least 6 characters"
                 value={field.state.value}
                 onBlur={field.handleBlur}
-                onChange={(changeEvent) => field.handleChange(changeEvent.target.value)}
-                aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}
+                onChange={(changeEvent) =>
+                  field.handleChange(changeEvent.target.value)
+                }
+                aria-invalid={
+                  field.state.meta.isTouched &&
+                  field.state.meta.errors.length > 0
+                }
               />
-              {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
-                <p className="text-sm text-destructive">{field.state.meta.errors.map((fieldError) => fieldError?.message ?? fieldError).join(", ")}</p>
-              )}
+              {field.state.meta.isTouched &&
+                field.state.meta.errors.length > 0 && (
+                  <p className="text-sm text-destructive">
+                    {field.state.meta.errors
+                      .map((fieldError) => fieldError?.message ?? fieldError)
+                      .join(', ')}
+                  </p>
+                )}
             </div>
           )}
         </form.Field>
@@ -90,7 +103,7 @@ export function UpdatePasswordForm() {
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Updating…" : "Update password"}
+              {isSubmitting ? 'Updating…' : 'Update password'}
             </Button>
           )}
         </form.Subscribe>
