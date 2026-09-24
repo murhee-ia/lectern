@@ -68,10 +68,6 @@ src/
     stores/     Zustand stores (client-side state) — divided by
                 *purpose-category*, not feature label; see below.
     constants/  Fixed values / config maps.
-    mocks/      SAMPLE DATA for surfaces not wired yet. Shaped exactly
-                like what the replacing query returns, so wiring a page
-                means swapping an import, not reshaping the UI. Delete an
-                export once nothing imports it.
     supabase/   Reserved exception, not a default. Only for functions
                 that CANNOT be Server Actions — currently that's just
                 code that must run inside Next.js Middleware (Edge
@@ -85,7 +81,7 @@ src/
 ```
 
 Every one of lib/actions/, lib/schemas/, lib/supabase/, lib/constants/,
-lib/mocks/, and types/ is divided by feature label as the next path segment. components/ and
+and types/ is divided by feature label as the next path segment. components/ and
 lib/utils/ are divided by feature label too — just without a suffix
 requirement on the filename (see §3). lib/hooks/ is too, once there are
 enough hooks to warrant it — one flat file is fine below that. lib/stores/
@@ -210,7 +206,6 @@ category split applies there too.
   | Server actions (writes; browser-called) | `.actions.ts` (plural — one file holds every action for that feature by default) | `actions/auth/auth.actions.ts`                                   |
   | Server-side reads (packages/server)     | `.queries.ts` (plural, same rule)                                                | `packages/server/src/organization/organization.queries.ts`       |
   | Constants                               | `.constants.ts`                                                                  | `lib/constants/organization/organization-sections.constants.ts`  |
-  | Sample data                             | `.mocks.ts`                                                                      | `lib/mocks/organization/organization.mocks.ts`                   |
   | Zod schemas                             | `.schemas.ts` (plural, same "one file per feature by default" rule)              | `lib/schemas/auth/auth.schemas.ts`                               |
   | Zustand stores                          | `.store.ts` (one file per distinct piece of state)                               | `lib/stores/server-mirror-stores/selected-organization.store.ts` |
   | Types (packages/types only)             | `.types.ts`                                                                      | `packages/types/organization/organization.types.ts`              |
@@ -387,3 +382,38 @@ Decide by what the logic _is_, not where it's convenient to write.
 
 A permission check in TypeScript is for deciding what to _show_. If it's
 ever the only thing standing between a user and an action, that's a bug.
+
+### Checking a permission
+
+Code asks for a **permission**, never a role. The role-to-permission mapping
+lives only in `role_permissions`, minus whatever an Admin has withheld from
+one member in `membership_permission_restrictions`, and `has_permission()` is
+the only thing that combines them. `current_organization_permissions()` hands
+its answer to the app, so a permission moved between roles, or a member
+restricted or allowed back, changes no TypeScript. A role check (`role === 'admin'`) is right only
+where the rule really is about the role itself, like the org console being
+Admin-only.
+
+Every feature gated on a permission (starting a team session, posting or
+claiming on the request board, inviting) uses the same helpers:
+
+| Where                               | Use                                                                                                          |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Client Component — show or hide     | `useOrganizationAccess().hasPermission('sessions.team.start')`                                               |
+| Server Component — show or hide     | `await hasOrganizationPermission(organizationId, 'sessions.team.start')`                                     |
+| Page that exists for one permission | `await requireOrganizationPermission(organizationId, 'sessions.team.start')`: 404 otherwise                  |
+| Server Action — before acting       | `if (!(await hasOrganizationPermission(organizationId, permission))) return { error: … }`                    |
+| Database — the rule itself          | RLS: `WITH CHECK (has_permission(organization_id, 'sessions.team.start'))` on the table the action writes to |
+
+The three server helpers share one cached `getOrganizationAccess()` per
+request, so checking several permissions costs one database round trip. The
+hook reads whatever the nearest layout seeded: the selected organization in
+the workspace, the organization in the URL in the org console.
+
+One rule is more than a permission: **joining a team session** is allowed
+with `sessions.team.join`, _or_ by whoever started that session, so a Session
+leader restricted from joining can still run the sessions they start.
+`can_join_team_session(organization_id, started_by)` holds that rule in SQL.
+The team-session tables' policies call it, never
+`has_permission(…, 'sessions.team.join')` directly, and a Join button checks
+the same pair: `hasPermission('sessions.team.join') || session.startedBy === currentUserId`.
