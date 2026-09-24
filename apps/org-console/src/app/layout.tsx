@@ -1,16 +1,16 @@
-import type { Metadata } from "next";
-import { figtree, fredoka, nunito } from "@repo/ui/fonts";
-import { SignOutButton } from "@repo/ui/components/customs/signout-button";
-import { signOutAction } from "@repo/server/auth";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { figtree, fredoka, nunito } from '@repo/ui/fonts';
+import { SignOutButton } from '@repo/ui/components/customs/signout-button';
+import { signOutAction } from '@repo/server/auth';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "Lectern",
+  title: 'Lectern',
   description:
-    "A team-aware AI explainer. Upload a file or describe a topic, and Lectern discusses it aloud.",
+    'A team-aware AI explainer. Upload a file or describe a topic, and Lectern discusses it aloud.',
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html
       lang="en"

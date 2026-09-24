@@ -1,4 +1,4 @@
-import { cn } from "cn";
+import { cn } from 'cn';
 
 export function LecternLogo({ className }: { className?: string }) {
   return (
@@ -7,7 +7,7 @@ export function LecternLogo({ className }: { className?: string }) {
         // Purple carries the badge — it's the product's main color — with a
         // two-yellow gradient reserved for the "L" itself, the one playful
         // pop against it.
-        "relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-lectern-accent-purple via-lectern-accent-purple to-lectern-primary-purple shadow-glass-sm",
+        'relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-lectern-accent-purple via-lectern-accent-purple to-lectern-primary-purple shadow-glass-sm',
         className,
       )}
     >

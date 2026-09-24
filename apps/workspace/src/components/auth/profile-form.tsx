@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { User } from "lucide-react";
-import { useForm } from "@tanstack/react-form";
+import { useState } from 'react';
+import { User } from 'lucide-react';
+import { useForm } from '@tanstack/react-form';
 
-import { Button } from "@repo/ui/components/ui/button";
-import { Input } from "@repo/ui/components/ui/input";
-import { Label } from "@repo/ui/components/ui/label";
-import { updateProfileSchema } from "@repo/lib/schemas/profile";
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { updateProfileSchema } from '@repo/lib/schemas/profile';
 
-import { updateProfileAction } from "@/lib/actions/auth/auth.actions";
+import { updateProfileAction } from '@/lib/actions/auth/auth.actions';
 
 export function ProfileForm({
   initialDisplayName,
@@ -25,9 +25,9 @@ export function ProfileForm({
 
   const form = useForm({
     defaultValues: {
-      displayName: initialDisplayName ?? "",
-      firstName: initialFirstName ?? "",
-      lastName: initialLastName ?? "",
+      displayName: initialDisplayName ?? '',
+      firstName: initialFirstName ?? '',
+      lastName: initialLastName ?? '',
     },
     validators: {
       onChange: updateProfileSchema,
@@ -37,7 +37,11 @@ export function ProfileForm({
       setSaved(false);
 
       const data = updateProfileSchema.parse(value);
-      const result = await updateProfileAction(data.displayName, data.firstName, data.lastName);
+      const result = await updateProfileAction(
+        data.displayName,
+        data.firstName,
+        data.lastName,
+      );
 
       if (result.error) {
         setError(result.error);
@@ -73,11 +77,18 @@ export function ProfileForm({
                 field.handleChange(changeEvent.target.value);
                 setSaved(false);
               }}
-              aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}
+              aria-invalid={
+                field.state.meta.isTouched && field.state.meta.errors.length > 0
+              }
             />
-            {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
-              <p className="text-sm text-destructive">{field.state.meta.errors.map((fieldError) => fieldError?.message ?? fieldError).join(", ")}</p>
-            )}
+            {field.state.meta.isTouched &&
+              field.state.meta.errors.length > 0 && (
+                <p className="text-sm text-destructive">
+                  {field.state.meta.errors
+                    .map((fieldError) => fieldError?.message ?? fieldError)
+                    .join(', ')}
+                </p>
+              )}
           </div>
         )}
       </form.Field>
@@ -98,11 +109,19 @@ export function ProfileForm({
                   field.handleChange(changeEvent.target.value);
                   setSaved(false);
                 }}
-                aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}
+                aria-invalid={
+                  field.state.meta.isTouched &&
+                  field.state.meta.errors.length > 0
+                }
               />
-              {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
-                <p className="text-sm text-destructive">{field.state.meta.errors.map((fieldError) => fieldError?.message ?? fieldError).join(", ")}</p>
-              )}
+              {field.state.meta.isTouched &&
+                field.state.meta.errors.length > 0 && (
+                  <p className="text-sm text-destructive">
+                    {field.state.meta.errors
+                      .map((fieldError) => fieldError?.message ?? fieldError)
+                      .join(', ')}
+                  </p>
+                )}
             </div>
           )}
         </form.Field>
@@ -122,11 +141,19 @@ export function ProfileForm({
                   field.handleChange(changeEvent.target.value);
                   setSaved(false);
                 }}
-                aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}
+                aria-invalid={
+                  field.state.meta.isTouched &&
+                  field.state.meta.errors.length > 0
+                }
               />
-              {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
-                <p className="text-sm text-destructive">{field.state.meta.errors.map((fieldError) => fieldError?.message ?? fieldError).join(", ")}</p>
-              )}
+              {field.state.meta.isTouched &&
+                field.state.meta.errors.length > 0 && (
+                  <p className="text-sm text-destructive">
+                    {field.state.meta.errors
+                      .map((fieldError) => fieldError?.message ?? fieldError)
+                      .join(', ')}
+                  </p>
+                )}
             </div>
           )}
         </form.Field>
@@ -136,7 +163,7 @@ export function ProfileForm({
       <form.Subscribe selector={(state) => state.isSubmitting}>
         {(isSubmitting) => (
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Saving details…" : "Save details"}
+            {isSubmitting ? 'Saving details…' : 'Save details'}
           </Button>
         )}
       </form.Subscribe>

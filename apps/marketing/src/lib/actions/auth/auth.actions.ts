@@ -1,13 +1,16 @@
-"use server";
+'use server';
 
-import { createServerSupabaseClient } from "@repo/supabase/server";
-import { joinCodeSchema } from "@repo/lib/schemas/organization";
-import { AVATAR_ALLOWED_MIME_TYPES, AVATAR_MAX_BYTES } from "@repo/lib/schemas/profile";
+import { createServerSupabaseClient } from '@repo/supabase/server';
+import { joinCodeSchema } from '@repo/lib/schemas/organization';
+import {
+  AVATAR_ALLOWED_MIME_TYPES,
+  AVATAR_MAX_BYTES,
+} from '@repo/lib/schemas/profile';
 
 // Google serves avatars from googleusercontent.com. Pinning the host keeps this
 // from becoming a server-side fetch of whatever URL happens to sit in
 // raw_user_meta_data, which is provider-controlled rather than lectern's.
-const ALLOWED_AVATAR_HOST_SUFFIX = ".googleusercontent.com";
+const ALLOWED_AVATAR_HOST_SUFFIX = '.googleusercontent.com';
 const ALLOWED_AVATAR_MIME_TYPES = new Set<string>(AVATAR_ALLOWED_MIME_TYPES);
 
 interface ResolveOrganizationMembershipResult {
@@ -23,33 +26,51 @@ export async function resolveOrganizationMembershipAction(
 
   // Every account gets its own free org-of-one, unconditionally — a join
   // code is always an ADDITIONAL membership on top of it, never a replacement.
-  const { data: personalOrganizationId, error: ensureError } = await supabase.rpc(
-    "ensure_personal_organization",
-  );
+  const { data: personalOrganizationId, error: ensureError } =
+    await supabase.rpc('ensure_personal_organization');
 
   if (ensureError || !personalOrganizationId) {
-    throw ensureError ?? new Error("Could not resolve an organization for this account");
+    throw (
+      ensureError ??
+      new Error('Could not resolve an organization for this account')
+    );
   }
 
   if (!joinCode) {
-    return { personalOrganizationId, joinedOrganizationId: null, joinCodeWasInvalid: false };
+    return {
+      personalOrganizationId,
+      joinedOrganizationId: null,
+      joinCodeWasInvalid: false,
+    };
   }
 
   const parsedJoinCode = joinCodeSchema.safeParse(joinCode);
   if (!parsedJoinCode.success) {
-    return { personalOrganizationId, joinedOrganizationId: null, joinCodeWasInvalid: true };
+    return {
+      personalOrganizationId,
+      joinedOrganizationId: null,
+      joinCodeWasInvalid: true,
+    };
   }
 
   const { data: joinedOrganizationId, error: joinError } = await supabase.rpc(
-    "join_organization_by_code",
+    'join_organization_by_code',
     { code: parsedJoinCode.data },
   );
 
   if (joinError || !joinedOrganizationId) {
-    return { personalOrganizationId, joinedOrganizationId: null, joinCodeWasInvalid: true };
+    return {
+      personalOrganizationId,
+      joinedOrganizationId: null,
+      joinCodeWasInvalid: true,
+    };
   }
 
-  return { personalOrganizationId, joinedOrganizationId, joinCodeWasInvalid: false };
+  return {
+    personalOrganizationId,
+    joinedOrganizationId,
+    joinCodeWasInvalid: false,
+  };
 }
 
 /**
@@ -64,7 +85,9 @@ export async function resolveOrganizationMembershipAction(
  */
 export async function importOAuthAvatarAction(): Promise<void> {
   const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return;
 
   const remoteAvatarUrl =
@@ -78,13 +101,13 @@ export async function importOAuthAvatarAction(): Promise<void> {
   } catch {
     return;
   }
-  if (parsedUrl.protocol !== "https:") return;
+  if (parsedUrl.protocol !== 'https:') return;
   if (!parsedUrl.hostname.endsWith(ALLOWED_AVATAR_HOST_SUFFIX)) return;
 
   const { data: profile } = await supabase
-    .from("member_profiles")
-    .select("avatar_path")
-    .eq("id", user.id)
+    .from('member_profiles')
+    .select('avatar_path')
+    .eq('id', user.id)
     .single();
   if (!profile || profile.avatar_path) return;
 
@@ -96,7 +119,8 @@ export async function importOAuthAvatarAction(): Promise<void> {
   }
   if (!response.ok) return;
 
-  const contentType = response.headers.get("content-type")?.split(";")[0]?.trim() ?? "";
+  const contentType =
+    response.headers.get('content-type')?.split(';')[0]?.trim() ?? '';
   if (!ALLOWED_AVATAR_MIME_TYPES.has(contentType)) return;
 
   const bytes = await response.arrayBuffer();
@@ -104,12 +128,12 @@ export async function importOAuthAvatarAction(): Promise<void> {
 
   const avatarPath = `${user.id}/avatar`;
   const { error: uploadError } = await supabase.storage
-    .from("avatars")
+    .from('avatars')
     .upload(avatarPath, bytes, { upsert: true, contentType });
   if (uploadError) return;
 
   await supabase
-    .from("member_profiles")
+    .from('member_profiles')
     .update({ avatar_path: avatarPath })
-    .eq("id", user.id);
+    .eq('id', user.id);
 }

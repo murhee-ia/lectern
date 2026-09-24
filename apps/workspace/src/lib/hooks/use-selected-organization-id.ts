@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useSelectedOrganizationStore } from "@/lib/stores/server-mirror-stores/selected-organization.store";
+import { useEffect } from 'react';
+import { useSelectedOrganizationStore } from '@/lib/stores/server-mirror-stores/selected-organization.store';
 
 /**
  * The effective selected-organization id: falls back to
@@ -12,9 +12,15 @@ import { useSelectedOrganizationStore } from "@/lib/stores/server-mirror-stores/
  * after selectOrganizationAction resolves and the layout re-fetches with
  * the newly-confirmed selection).
  */
-export function useSelectedOrganizationId(serverSelectedOrganizationId: string): string {
-  const storeSelectedId = useSelectedOrganizationStore((state) => state.selectedOrganizationId);
-  const setStoreSelectedId = useSelectedOrganizationStore((state) => state.setSelectedOrganizationId);
+export function useSelectedOrganizationId(
+  serverSelectedOrganizationId: string,
+): string {
+  const storeSelectedId = useSelectedOrganizationStore(
+    (state) => state.selectedOrganizationId,
+  );
+  const setStoreSelectedId = useSelectedOrganizationStore(
+    (state) => state.setSelectedOrganizationId,
+  );
 
   useEffect(() => {
     setStoreSelectedId(serverSelectedOrganizationId);

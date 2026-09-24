@@ -1,9 +1,9 @@
-import "server-only";
+import 'server-only';
 
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import type { Database } from "./types";
-import { sharedCookieOptions } from "./cookies";
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import type { Database } from './types';
+import { sharedCookieOptions } from './cookies';
 
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
@@ -19,16 +19,15 @@ export async function createServerSupabaseClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(
-              ({ name, value, options }) => 
-                cookieStore.set(name, value, options),
-            )
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options),
+            );
           } catch {
             // setAll is called from a Server Component during render,
             // where cookies can't be mutated.
           }
-        }
-      }
-    }
+        },
+      },
+    },
   );
 }

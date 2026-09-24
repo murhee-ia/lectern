@@ -1,17 +1,18 @@
-import type { Metadata } from "next";
-import { figtree, fredoka, nunito } from "@repo/ui/fonts";
-import { getWorkspaceOrganizationsAction } from "@repo/server/organization";
-import { OrganizationSwitcher } from "@/components/organization/organization-switcher";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { figtree, fredoka, nunito } from '@repo/ui/fonts';
+import { getWorkspaceOrganizationsAction } from '@repo/server/organization';
+import { OrganizationSwitcher } from '@/components/organization/organization-switcher';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "Lectern",
+  title: 'Lectern',
   description:
-    "A team-aware AI explainer. Upload a file or describe a topic, and Lectern discusses it aloud.",
+    'A team-aware AI explainer. Upload a file or describe a topic, and Lectern discusses it aloud.',
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const { organizations, selectedOrganizationId } = await getWorkspaceOrganizationsAction();
+export default async function RootLayout({ children }: LayoutProps<'/'>) {
+  const { organizations, selectedOrganizationId } =
+    await getWorkspaceOrganizationsAction();
 
   return (
     <html
@@ -24,7 +25,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             organizations={organizations}
             serverSelectedOrganizationId={selectedOrganizationId}
           />
-          <a href="/account" className="text-sm text-foreground/70 hover:text-foreground">
+          <a
+            href="/account"
+            className="text-sm text-foreground/70 hover:text-foreground"
+          >
             Account
           </a>
         </header>
