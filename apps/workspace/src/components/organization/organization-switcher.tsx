@@ -74,13 +74,13 @@ export function OrganizationSwitcher({
         onClick={() => setOpen((value) => !value)}
         disabled={isPending}
       >
-        <span className="max-w-40 truncate">
+        <span className="max-w-32 truncate sm:max-w-48 lg:max-w-xs">
           {selectedOrganization?.name ?? 'Select organization'}
         </span>
         <ChevronsUpDown className="size-4 text-foreground/50" />
       </Button>
       {open && (
-        <div className="glass-card absolute top-full left-0 z-50 mt-2 w-64 p-2">
+        <div className="glass-card absolute top-full left-0 z-50 mt-2 w-64 max-w-[calc(100vw-2rem)] p-2">
           {organizations.map((organization) => (
             <button
               key={organization.id}
