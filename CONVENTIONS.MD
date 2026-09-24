@@ -56,17 +56,22 @@ src/
                 it server-side and passes it down as a prop, rather than the Client
                 Component calling `useSearchParams()` itself.
   lib/
-    actions/    "use server" Server Actions — default home for anything
-                that talks to Supabase, reads and writes alike. Default
-                to putting a new data function here unless it genuinely
-                can't be a Server Action (see supabase/ below).
+    actions/    "use server" Server Actions — writes, and anything the
+                browser calls. Reads that only Server Components need are
+                not actions: they're cached queries in packages/server
+                (see §5 and §7), because every "use server" export is a
+                publicly callable endpoint and can't use React's cache().
     schemas/    Zod schemas.
     utils/      Pure helper functions — no React, no Supabase calls,
                 no side effects. The one deliberate catch-all category.
     hooks/      Custom React hooks.
     stores/     Zustand stores (client-side state) — divided by
                 *purpose-category*, not feature label; see below.
-    constants/  Fixed values / config maps (reserved — none yet).
+    constants/  Fixed values / config maps.
+    mocks/      SAMPLE DATA for surfaces not wired yet. Shaped exactly
+                like what the replacing query returns, so wiring a page
+                means swapping an import, not reshaping the UI. Delete an
+                export once nothing imports it.
     supabase/   Reserved exception, not a default. Only for functions
                 that CANNOT be Server Actions — currently that's just
                 code that must run inside Next.js Middleware (Edge
@@ -75,11 +80,12 @@ src/
                 packages/supabase/middleware.ts, which lives in the
                 package, not here.
   components/   React components — anything with JSX that isn't a page.
-  types/        App-local TS types, and ambient .d.ts module shims.
+  types/        Ambient .d.ts module shims only. Every other type lives
+                in packages/types (§5), even if one app uses it today.
 ```
 
-Every one of lib/actions/, lib/schemas/, lib/supabase/, and types/ is
-divided by feature label as the next path segment. components/ and
+Every one of lib/actions/, lib/schemas/, lib/supabase/, lib/constants/,
+lib/mocks/, and types/ is divided by feature label as the next path segment. components/ and
 lib/utils/ are divided by feature label too — just without a suffix
 requirement on the filename (see §3). lib/hooks/ is too, once there are
 enough hooks to warrant it — one flat file is fine below that. lib/stores/
@@ -199,14 +205,17 @@ category split applies there too.
   — in a fuzzy-file-switcher, in `grep`, in a PR diff list — independent of
   which folder it's sitting in:
 
-  | Purpose                                | Suffix                                                                           | Example                                                          |
-  | -------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-  | Server actions (reads and writes both) | `.actions.ts` (plural — one file holds every action for that feature by default) | `actions/auth/auth.actions.ts`                                   |
-  | Zod schemas                            | `.schemas.ts` (plural, same "one file per feature by default" rule)              | `lib/schemas/auth/auth.schemas.ts`                               |
-  | Zustand stores                         | `.store.ts` (one file per distinct piece of state)                               | `lib/stores/server-mirror-stores/selected-organization.store.ts` |
-  | Local types                            | `.types.ts`                                                                      | `types/organization/organization.types.ts`                       |
-  | Route handler                          | `route.ts` (framework-mandated, not our choice)                                  | `app/auth/confirm/route.ts`                                      |
-  | `supabase/` exception, if ever used    | `.query.ts` for a read, `.mutation.ts` for a write                               | `supabase/auth/some-middleware-only-check.query.ts`              |
+  | Purpose                                 | Suffix                                                                           | Example                                                          |
+  | --------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+  | Server actions (writes; browser-called) | `.actions.ts` (plural — one file holds every action for that feature by default) | `actions/auth/auth.actions.ts`                                   |
+  | Server-side reads (packages/server)     | `.queries.ts` (plural, same rule)                                                | `packages/server/src/organization/organization.queries.ts`       |
+  | Constants                               | `.constants.ts`                                                                  | `lib/constants/organization/organization-sections.constants.ts`  |
+  | Sample data                             | `.mocks.ts`                                                                      | `lib/mocks/organization/organization.mocks.ts`                   |
+  | Zod schemas                             | `.schemas.ts` (plural, same "one file per feature by default" rule)              | `lib/schemas/auth/auth.schemas.ts`                               |
+  | Zustand stores                          | `.store.ts` (one file per distinct piece of state)                               | `lib/stores/server-mirror-stores/selected-organization.store.ts` |
+  | Types (packages/types only)             | `.types.ts`                                                                      | `packages/types/organization/organization.types.ts`              |
+  | Route handler                           | `route.ts` (framework-mandated, not our choice)                                  | `app/auth/confirm/route.ts`                                      |
+  | `supabase/` exception, if ever used     | `.query.ts` for a read, `.mutation.ts` for a write                               | `supabase/auth/some-middleware-only-check.query.ts`              |
 
 - **`lib/utils/`, `components/`, `hooks/` — no suffix.** A util is just a
   function; its folder (`lib/utils/<feature>/`) already says everything the
@@ -252,7 +261,15 @@ promotion rule as `packages/ui` compositions further down. `resolveSafeRedirect`
 and `signOutAction` are the two current examples: both were duplicated (or
 duplication-shaped) across apps before they were promoted.
 
-### `packages/types` — cross-app plain TS types only, no Zod
+Two firm rules sit on top of that default:
+
+- **Anything both apps use lives in a package** — hook, util, component,
+  store, or query. Never a copy in each app.
+- **Every type lives in `packages/types`**, from the start, even when only
+  one app uses it today. Types are cheap to share and expensive to
+  reconcile once two apps have each grown their own.
+
+### `packages/types` — every type, no Zod
 
 `<feature>/<feature>.types.ts` at the package root, each also exposed as
 its own subpath export (`@repo/types/organization`, ...), plus a barrel
@@ -260,6 +277,12 @@ its own subpath export (`@repo/types/organization`, ...), plus a barrel
 that's `packages/lib`'s job below. Keeping the two separate is what lets
 this package stay flat instead of needing a `types/` subfolder to
 disambiguate from a `schemas/` sibling.
+
+A type mirroring a database enum is **derived** from the generated types
+(`Database['public']['Enums']['organization_role']`), never restated, so a
+migration that changes the enum breaks the build instead of drifting. A
+field the database doesn't store yet is marked `PROPOSED` in its doc
+comment, so the gap between the UI and the schema stays visible.
 
 ### `packages/lib` — cross-app Zod schemas and utils (`hooks/`, `stores/` reserved)
 
@@ -276,11 +299,19 @@ schemas — an app only adds a direct `zod` dependency if it imports from
 the `zod` package itself, not merely `.safeParse()`s an imported schema
 object.
 
-### `packages/server` — cross-app Server Actions
+### `packages/server` — cross-app Server Actions and server-side reads
 
 Wraps its content in `src/`: `src/<feature>/<feature>.actions.ts`, one
 subpath export per feature (`@repo/server/auth`, `@repo/server/organization`,
-...). Deliberately no barrel `index.ts`/`"."` export — importing straight
+...), and `src/<feature>/<feature>.queries.ts` beside it, exported as
+`@repo/server/<feature>/queries`.
+
+Queries are `import 'server-only'` functions wrapped in React's `cache()`
+— `getCurrentUser`, `getOrganizationSelection`, `getOrganizationAccess`,
+... — so a layout, a page, and a component asking for the same thing during
+one request share one round trip. They carry no `"use server"`: nothing
+in the browser calls them, and marking them would publish each as an
+endpoint. An action that needs the current user calls the same query. Deliberately no barrel `index.ts`/`"."` export — importing straight
 from the file that carries `"use server"` is more reliable for Next.js's
 Server Action bundler tracing than re-exporting through a barrel. Same
 constraint as an app-local action per §6: creates its own Supabase client
@@ -337,3 +368,22 @@ explicitly documented by Next.js as a data-fetching pattern, but nothing
 prohibits it either — the client↔server RPC machinery only matters when
 a Client Component is the caller. Called from other server-side code, a
 `"use server"` function behaves like any other async function.
+
+---
+
+## 7. Data access: what goes where
+
+Decide by what the logic _is_, not where it's convenient to write.
+
+| Logic                                                       | Lives in                                       | Why                                                                                                                                                                                                         |
+| ----------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Who may see or do what**                                  | Postgres — RLS policies and `has_permission()` | The only layer a client can't bypass. The UI hiding a button is a courtesy; the database refusing the write is the rule.                                                                                    |
+| **A question about authorization the app needs answered**   | A SQL function built _on_ the rule             | `current_organization_permissions()` asks `has_permission()` rather than restating its join, so the UI can never offer what RLS will refuse.                                                                |
+| **A multi-table read reused in many places**                | A `security_invoker` view — when it earns it   | One round trip instead of several. `security_invoker = true` is not optional: a default view runs as its owner and **bypasses RLS entirely**. Not used yet; the member-profile join is the first candidate. |
+| **Composing reads for one request**                         | `packages/server` queries                      | Typed, cached per request, shared by both apps.                                                                                                                                                             |
+| **Writes, and anything the browser triggers**               | Server Actions                                 | The one sanctioned client-to-server call.                                                                                                                                                                   |
+| **Pure derivation** — names, labels, sort order, formatting | `packages/lib` utils                           | No security, no I/O, trivially testable.                                                                                                                                                                    |
+| **What client components need to know**                     | A hook reading context the layout seeded       | `useOrganizationAccess()`: the server fetches once, the client never refetches or re-derives.                                                                                                               |
+
+A permission check in TypeScript is for deciding what to _show_. If it's
+ever the only thing standing between a user and an action, that's a bug.
