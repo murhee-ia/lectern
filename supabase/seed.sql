@@ -53,10 +53,10 @@ values
   ('b0000000-0000-0000-0000-000000000002', 'Dev Organization Two', 'free', 'a0000000-0000-0000-0000-000000000002')
 on conflict (id) do nothing;
 
-insert into public.memberships (user_id, organization_id, role)
+insert into public.memberships (user_id, organization_id, role, join_method)
 values
-  ('a0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'admin'),
-  ('a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'admin')
+  ('a0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'admin', 'organization_creation'),
+  ('a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'admin', 'organization_creation')
 on conflict (user_id, organization_id) do nothing;
 
 
