@@ -92,7 +92,7 @@ export function ProfileForm({
           </div>
         )}
       </form.Field>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <form.Field name="firstName">
           {(field) => (
             <div className="grid gap-2">
