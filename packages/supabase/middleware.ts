@@ -4,19 +4,18 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { User } from "@supabase/supabase-js";
 import type { Database } from "./types";
+import { sharedCookieOptions } from "./cookies";
 
 export async function updateSession(
   request: NextRequest,
 ): Promise<{ response: NextResponse; user: User | null }> {
   let response = NextResponse.next({ request });
-  const cookieOptions =
-    process.env.NODE_ENV === "production" ? { domain: ".lecternapp.me" } : undefined;
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions,
+      cookieOptions: sharedCookieOptions,
       cookies: {
         getAll() {
           return request.cookies.getAll();
