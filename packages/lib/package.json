@@ -10,7 +10,8 @@
     "./schemas/profile": "./src/schemas/auth/profile.schemas.ts",
     "./schemas/organization": "./src/schemas/organization/organization.schemas.ts",
     "./utils/auth": "./src/utils/auth/safe-redirect.ts",
-    "./utils/formatting": "./src/utils/formatting/date.ts"
+    "./utils/formatting": "./src/utils/formatting/date.ts",
+    "./utils/organization": "./src/utils/organization/organization-member.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -18,13 +19,19 @@
     "test": "echo \"no tests yet\" && exit 0"
   },
   "dependencies": {
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@repo/types": "workspace:*"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "typescript": "catalog:",
     "eslint": "catalog:",
-    "@types/node": "^20"
+    "@types/node": "^20",
+    "react": "catalog:",
+    "@types/react": "^19"
+  },
+  "peerDependencies": {
+    "react": "^19"
   }
 }
