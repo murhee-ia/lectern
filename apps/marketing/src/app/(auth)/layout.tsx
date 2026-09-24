@@ -84,7 +84,7 @@ export default function AuthLayout({
               the ambient background. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute -inset-5 rounded-[calc(var(--radius-panel)+1.25rem)] bg-gradient-to-br from-lectern-accent-purple/45 via-lectern-accent-purple/10 to-highlight/15 blur-2xl"
+            className="pointer-events-none absolute -inset-4 rounded-[calc(var(--radius-panel)+1.25rem)] bg-gradient-to-br from-lectern-accent-purple/45 via-lectern-accent-purple/10 to-highlight/15 blur-2xl sm:-inset-5"
           />
           <div className="glass-card relative overflow-hidden border-lectern-white/20 shadow-[0_30px_90px_-25px_rgba(61,24,105,0.7)] backdrop-blur-2xl backdrop-saturate-150">
             <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-highlight to-transparent" />
