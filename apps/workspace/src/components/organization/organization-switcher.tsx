@@ -52,8 +52,8 @@ export function OrganizationSwitcher({
 
     const previousSelectedId = storeSelectedId;
 
-    // Optimistic — OrganizationSummaryCard on the home page reads this same
-    // store, so both it and this switcher update instantly
+    // Optimistic, so the switcher shows the new name at once; the rest of the
+    // page follows when the action's revalidation re-renders the layout.
     setStoreSelectedId(clickedOrganizationId);
     setError(null);
 
