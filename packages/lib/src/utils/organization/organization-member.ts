@@ -47,14 +47,16 @@ export function resolveMemberDisplayName(
   return fullName;
 }
 
-/** "Amara Okafor" → "AO"; a single word yields one letter. */
+/**
+ * The first letters of a name's first and last words: "Amara Okafor" → "AO",
+ * "Amara Chidi Okafor" → "AO". A single word yields one letter.
+ */
 export function getNameInitials(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((word) => word[0])
-    .slice(0, 2)
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const initialWords = words.length > 1 ? [words[0], words.at(-1)] : words;
+
+  return initialWords
+    .map((word) => (word ? Array.from(word)[0] : ''))
     .join('')
     .toUpperCase();
 }
