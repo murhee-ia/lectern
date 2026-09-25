@@ -4,7 +4,11 @@
   "private": true,
   "exports": {
     "./auth": "./src/auth/auth.actions.ts",
-    "./organization": "./src/organization/organization.actions.ts"
+    "./auth/queries": "./src/auth/auth.queries.ts",
+    "./auth/profile/queries": "./src/auth/profile.queries.ts",
+    "./auth/profile": "./src/auth/profile.actions.ts",
+    "./organization": "./src/organization/organization.actions.ts",
+    "./organization/queries": "./src/organization/organization.queries.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -13,7 +17,9 @@
   },
   "dependencies": {
     "@repo/supabase": "workspace:*",
-    "@repo/types": "workspace:*"
+    "@repo/types": "workspace:*",
+    "@supabase/supabase-js": "catalog:",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -21,6 +27,12 @@
     "next": "catalog:",
     "typescript": "catalog:",
     "eslint": "catalog:",
-    "@types/node": "^20"
+    "@types/node": "^20",
+    "react": "catalog:",
+    "@types/react": "^19"
+  },
+  "peerDependencies": {
+    "react": "^19",
+    "next": "^16"
   }
 }
