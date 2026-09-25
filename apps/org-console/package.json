@@ -19,7 +19,9 @@
     "@repo/types": "workspace:*",
     "@supabase/supabase-js": "catalog:",
     "@repo/ui": "workspace:*",
-    "@tanstack/react-table": "catalog:"
+    "@tanstack/react-table": "catalog:",
+    "lucide-react": "catalog:",
+    "zustand": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
