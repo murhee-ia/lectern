@@ -1,10 +1,12 @@
-import type { OrganizationMember } from '@repo/types/organization';
+import type { MemberIdentity as MemberIdentityShape } from '@repo/types/auth';
 import { resolveMemberDisplayName } from '@repo/lib/utils/organization';
 import { MemberAvatar } from '@repo/ui/components/customs/member-avatar';
 
 /**
- * Avatar, name, and optionally email. The one way a member is identified on
- * every screen, so a person's name never resolves differently between apps.
+ * Avatar and name — the one way a member is identified on every screen, so a
+ * person's name never resolves differently between apps. `showEmail` is set
+ * only by the org console's members list, the one screen allowed to show
+ * another member's email; everywhere else the data doesn't even carry it.
  */
 export function MemberIdentity({
   member,
@@ -13,15 +15,15 @@ export function MemberIdentity({
   size = 'sm',
 }: {
   member: Pick<
-    OrganizationMember,
-    'displayName' | 'firstName' | 'lastName' | 'email'
-  >;
+    MemberIdentityShape,
+    'displayName' | 'firstName' | 'lastName'
+  > & { email?: string };
   imageUrl?: string | null;
   showEmail?: boolean;
   size?: 'sm' | 'lg';
 }) {
   const name = resolveMemberDisplayName(member);
-  const email = showEmail && name !== member.email ? member.email : null;
+  const email = showEmail ? member.email : null;
 
   return (
     <span className="flex min-w-0 items-center gap-3">

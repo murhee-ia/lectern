@@ -1,5 +1,5 @@
 import type { Database } from '@repo/supabase/types';
-import type { MemberProfile } from '../auth/auth.types';
+import type { MemberIdentity } from '../auth/auth.types';
 
 // ---------------------------------------------------------------------------
 // Mirrors of database enums. Derived from the generated types rather than
@@ -61,17 +61,19 @@ export type OrganizationSettings = {
 };
 
 /**
- * One membership joined to its member_profiles row. This is the read-only view
- * any member of an organization is allowed to see of the others.
+ * One membership tied to its member's identity — what every member of an
+ * organization sees of the others in the workspace. No email.
  */
-export type OrganizationMember = Omit<MemberProfile, 'createdAt'> & {
+export type OrganizationMember = MemberIdentity & {
   role: OrganizationRole;
   joinedAt: string;
 };
 
 /**
- * A member as an organization's Admin sees them: everything
- * {@link OrganizationMember} holds, plus what they're restricted from.
+ * A member as the org console's members list shows them to an Admin:
+ * everything {@link OrganizationMember} holds, plus how they joined, what
+ * they're restricted from, and their email — which that list is the only
+ * place in the console to show.
  */
 export type OrganizationMemberDetail = OrganizationMember & {
   /**
@@ -81,6 +83,7 @@ export type OrganizationMemberDetail = OrganizationMember & {
    */
   restrictedPermissions: AppPermission[];
   joinMethod: MembershipJoinMethod;
+  email: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -88,22 +91,26 @@ export type OrganizationMemberDetail = OrganizationMember & {
 // ---------------------------------------------------------------------------
 
 /**
- * Mirrors `organization_invites.status`. The column is unconstrained text and
- * only 'pending' is ever written today; these are the values the invitations
- * flow needs it to hold, and worth a check constraint once it is built.
+ * Mirrors `organization_invites.status`. An invitation is `pending` until it's
+ * accepted or canceled, and pending again whenever it's resent. "Expired"
+ * isn't a status; it comes from `expires_at`. The column is still
+ * unconstrained text, and gets a check constraint when the invitation flow is
+ * built.
  */
-export type OrganizationInvitationStatus = 'pending' | 'accepted' | 'revoked';
+export type OrganizationInvitationStatus = 'pending' | 'accepted' | 'canceled';
 
 /**
- * Mirrors an `organization_invites` row, minus `token`: that is the credential
- * the emailed link carries, and nothing in the UI needs it.
+ * An invitation as the invitations page lists it: an `organization_invites`
+ * row minus `token`, the credential the emailed link carries, which nothing
+ * in the UI needs. Never `accepted`: an accepted invitation is a membership,
+ * and appears on the members list instead.
  */
 export type OrganizationInvitation = {
   id: string;
   email: string;
   /** Encodes the table's `check (role <> 'admin')` — an invite never grants Admin. */
   role: Exclude<OrganizationRole, 'admin'>;
-  status: OrganizationInvitationStatus;
+  status: Exclude<OrganizationInvitationStatus, 'accepted'>;
   createdAt: string;
   expiresAt: string;
 };
