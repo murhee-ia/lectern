@@ -279,6 +279,12 @@ migration that changes the enum breaks the build instead of drifting. A
 field the database doesn't store yet is marked `PROPOSED` in its doc
 comment, so the gap between the UI and the schema stays visible.
 
+`packages/types` is the only place that imports the generated
+`@repo/supabase/types`. A raw row type a query needs
+(`MemberProfileRow`) is defined here too, beside the app-facing type it
+maps to (`MemberProfile`); `packages/server` and the apps import both from
+`@repo/types`.
+
 ### `packages/lib` — cross-app Zod schemas and utils (`hooks/`, `stores/` reserved)
 
 Wraps its content in `src/`. `src/schemas/<feature>/<feature>.schemas.ts`
@@ -417,3 +423,147 @@ leader restricted from joining can still run the sessions they start.
 The team-session tables' policies call it, never
 `has_permission(…, 'sessions.team.join')` directly, and a Join button checks
 the same pair: `hasPermission('sessions.team.join') || session.startedBy === currentUserId`.
+
+### Showing people
+
+**Every column that points at a member gets two foreign keys**: one to
+`auth.users(id)` and one to `member_profiles(id)`, with the same `ON DELETE`
+on both. `memberships.user_id` is the model; a request's poster, a session's
+starter, a library item's author, and an invite's sender all follow it. The
+`member_profiles` key is what lets PostgREST embed the person in the same
+query, so a list of rows arrives with its people in one request. There's no
+separate "look up these profiles" query.
+
+**Every embed selects the same shape.** A member is shown as a
+`MemberIdentity` (`@repo/types/auth`): their avatar, and the name fields
+`resolveMemberDisplayName()` reads, the display name first with first and
+last name as the fallback. A query embeds
+`member_profiles(${MEMBER_IDENTITY_COLUMNS})` and maps the row with
+`toMemberIdentity()`, both from `@repo/server/auth/profile/queries`. When one
+row points at two members, alias each embed and name its foreign key:
+`poster:member_profiles!requests_posted_by_profile_fkey(…)`.
+
+**Email is selected only where it's shown**: the org console's members list
+(`getOrganizationMemberDetails()`) and the member's own profile page
+(`getCurrentMemberProfile()`). Every other query, in the workspace and the
+rest of the console alike, leaves it out, so an address can't reach a screen
+that shouldn't show it even by mistake.
+
+**Realtime payloads carry only a `user_id`.** Resolve it against the
+organization's member list the page already holds, and refetch that list when
+an id is missing, rather than looking people up one at a time.
+
+---
+
+## 8. CONSIDERATION — for future implementations
+
+**Not rules yet.** Notes from comparing Lectern's direction against other
+codebases. When one is adopted, move it into the section it belongs to and
+delete it here.
+
+### Access context
+
+- **Put the current user's id in the access context.** `useOrganizationAccess()`
+  carries role and permissions but not who the user is, and ownership checks
+  need it, e.g. `session.startedBy === currentUserId` beside
+  `hasPermission('sessions.team.join')`.
+- **Feature-level permission hooks are fine**, e.g. `useTeamSessionAccess()`,
+  as long as they only combine `hasPermission()` and ownership to mirror a rule
+  SQL already enforces (`can_join_team_session()`). A hook must never add a
+  business rule of its own, or gate a feature on a role, because nothing in
+  the database would enforce it.
+
+### TanStack Query, once adopted
+
+- **First render comes from the server.** Prefetch with a `packages/server`
+  query and pass it down through `HydrationBoundary`, so the page has its data
+  before any client code runs.
+- **Refetching in the browser needs something the browser can call.** Choose
+  one per feature: a GET Route Handler that calls the server query (the lean
+  for lists), or the Supabase browser client under RLS. Not a Server Action.
+  Actions are POST, run one at a time, and are meant for writes.
+- **Writes:** `useMutation` calls a Server Action. An optimistic `setQueryData`
+  is rolled back in `onError`, and `invalidateQueries` runs once it settles.
+- **Toasts belong in mutation callbacks or the UI**, never inside a
+  `queryFn`/`mutationFn`. Throw an error once, rather than logging it and
+  throwing it again.
+- **One query-key factory per feature**, e.g.
+  `organizationKeys.members(organizationId)`, so every read and every
+  invalidation spells a key the same way.
+- **An optimistic update reads only its own cache.** It doesn't cast another
+  query's data to fill itself in, and it never invents fields such as
+  `created_at: new Date()` to complete a row.
+
+### UI
+
+- **Hide or disable what the user can't do.** Don't show a control and then
+  toast "you don't have permission" when it's clicked.
+- **The initials avatar could take a colour derived from the user id**, stable
+  per person, so people stay recognizable without a photo.
+
+### Schema
+
+- **Columns that still point at a member through `auth.users` alone:**
+  `organizations.created_by`, `organization_invites.invited_by`, and
+  `membership_permission_restrictions.restricted_by`. Give each its
+  `member_profiles` foreign key (see "Showing people" in §7) once a screen
+  shows that person.
+- **Known gap: every member can read the whole `organizations` row.** The
+  read policy (`is_organization_member(id)`) doesn't limit columns, so a
+  plain Member can read `join_code`, `stripe_customer_id`,
+  `stripe_subscription_id` and `limit_overrides` straight from the browser.
+  This was verified as a Member on 2026-09-25. The join code is meant to be
+  Admin-only; `getOrganizationSettings()` is Admin-only today only because its
+  callers sit behind the console's `requireOrganizationAdmin`, and its comment
+  still says "null if … isn't a member". Planned fix:
+  - Grant members SELECT on `id, name, plan, created_by, created_at` only.
+  - Hand the join code out through a function that checks a permission.
+    Still open: `invites.manage` (whoever can invite sees the code that
+    invites) or `org.settings.manage`.
+  - Have `getOrganizationSettings()` call that function, return `null`
+    without the permission, and fix its comment.
+  - Leave the Stripe ids and limit overrides to the service role or their own
+    functions.
+
+  Nothing else reads those columns: every other `organizations` read asks
+  only for `name` and `plan`, and the functions that create memberships run
+  as their owner.
+
+### Invitations — decided, not built yet
+
+The email-invitation flow is only partly built. These are the decided rules,
+recorded so the gaps below aren't mistaken for the design.
+
+- **Three statuses:** `pending`, `accepted`, `canceled`. An invitation is
+  **never deleted**; only its status changes, and what the Admin can do
+  depends on it.
+- **"Expired" isn't a status.** It comes from `expires_at`: a `pending`
+  invitation past its expiry is still `pending`, and its link no longer works.
+- **The invitations page lists every `pending` and `canceled` invitation,
+  however old.** It doubles as the organization's invitation log.
+- **`accepted` invitations don't appear there.** Accepting creates a
+  membership (`join_method = 'email_invitation'`), so that person appears on
+  the members list instead.
+- **Actions by state:**
+  - `pending`, still valid → **Cancel**: status becomes `canceled`, and the
+    link already sent stops working. Cancel only stops an invitation.
+  - `pending`, expired → **Resend**.
+  - `canceled` → **Resend**.
+- **Resend refreshes the same row**, with a new token and expiry, and sets
+  the status back to `pending`. The action is then **Cancel** again while the
+  new link is valid. An Admin can keep resending until the invitation is
+  accepted, or leave it pending with an expired link indefinitely. Because
+  the row is refreshed rather than replaced, `created_at` stays the first time
+  it was sent, which is why the page labels it "First invited".
+- **Once accepted**, it leaves the invitations page for the members list.
+
+**Built so far:** `getOrganizationInvitations()` returns `pending` and
+`canceled` rows, and the page shows each as Pending, Expired or Canceled with
+its action; the buttons don't act yet. RLS allows viewing, sending and
+updating invitations, with no DELETE policy.
+
+**Deferred until the flow is built**, since it's a database change:
+`organization_invites.status` is still unconstrained text, and needs a
+`CHECK (status IN ('pending', 'accepted', 'canceled'))` or an enum. A
+`last_sent_at` column would also let the page show when an invitation was
+last resent, not only first sent.
