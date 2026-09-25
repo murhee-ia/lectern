@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@repo/ui/components/ui/button';
-import type { WorkspaceOrganizationMembership } from '@repo/types/organization';
+import type { OrganizationMembership } from '@repo/types/organization';
+import { formatOrganizationRole } from '@repo/lib/utils/organization';
 import { selectOrganizationAction } from '@repo/server/organization';
 import { useSelectedOrganizationId } from '@/lib/hooks/use-selected-organization-id';
 import { useSelectedOrganizationStore } from '@/lib/stores/server-mirror-stores/selected-organization.store';
@@ -12,7 +13,7 @@ export function OrganizationSwitcher({
   organizations,
   serverSelectedOrganizationId,
 }: {
-  organizations: WorkspaceOrganizationMembership[];
+  organizations: OrganizationMembership[];
   serverSelectedOrganizationId: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -66,15 +67,15 @@ export function OrganizationSwitcher({
   };
 
   return (
-    <div className="relative" ref={switcherContainerRef}>
+    <div className="relative min-w-0" ref={switcherContainerRef}>
       <Button
         type="button"
         variant="ghost"
-        className="gap-2"
+        className="min-w-0 shrink gap-2"
         onClick={() => setOpen((value) => !value)}
         disabled={isPending}
       >
-        <span className="max-w-32 truncate sm:max-w-48 lg:max-w-xs">
+        <span className="max-w-32 min-w-0 truncate sm:max-w-48 lg:max-w-xs">
           {selectedOrganization?.name ?? 'Select organization'}
         </span>
         <ChevronsUpDown className="size-4 text-foreground/50" />
@@ -92,8 +93,8 @@ export function OrganizationSwitcher({
                 <span className="truncate font-medium text-foreground">
                   {organization.name}
                 </span>
-                <span className="text-xs text-foreground/60 capitalize">
-                  {organization.role}
+                <span className="text-xs text-foreground/60">
+                  {formatOrganizationRole(organization.role)}
                 </span>
               </span>
               {organization.id === storeSelectedId && (
