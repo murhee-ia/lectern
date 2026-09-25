@@ -259,6 +259,9 @@ importers:
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
+      '@repo/server':
+        specifier: workspace:*
+        version: link:../../packages/server
       '@repo/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase

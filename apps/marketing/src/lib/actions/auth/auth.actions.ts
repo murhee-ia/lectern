@@ -1,6 +1,7 @@
 'use server';
 
 import { createServerSupabaseClient } from '@repo/supabase/server';
+import { getCurrentUser } from '@repo/server/auth/queries';
 import { joinCodeSchema } from '@repo/lib/schemas/organization';
 import {
   AVATAR_ALLOWED_MIME_TYPES,
@@ -84,10 +85,7 @@ export async function resolveOrganizationMembershipAction(
  * overwritten on a subsequent Google sign-in.
  */
 export async function importOAuthAvatarAction(): Promise<void> {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return;
 
   const remoteAvatarUrl =
@@ -104,6 +102,7 @@ export async function importOAuthAvatarAction(): Promise<void> {
   if (parsedUrl.protocol !== 'https:') return;
   if (!parsedUrl.hostname.endsWith(ALLOWED_AVATAR_HOST_SUFFIX)) return;
 
+  const supabase = await createServerSupabaseClient();
   const { data: profile } = await supabase
     .from('member_profiles')
     .select('avatar_path')
