@@ -1,7 +1,5 @@
-import type {
-  OrganizationMember,
-  OrganizationRole,
-} from '@repo/types/organization';
+import type { MemberIdentity } from '@repo/types/auth';
+import type { OrganizationRole } from '@repo/types/organization';
 
 const ORGANIZATION_ROLE_LABELS: Record<OrganizationRole, string> = {
   admin: 'Admin',
@@ -36,10 +34,7 @@ export function compareOrganizationRoles(
  * on which screen shows it.
  */
 export function resolveMemberDisplayName(
-  member: Pick<
-    OrganizationMember,
-    'displayName' | 'firstName' | 'lastName'
-  >,
+  member: Pick<MemberIdentity, 'displayName' | 'firstName' | 'lastName'>,
 ): string {
   const displayName = member.displayName?.trim();
   if (displayName) return displayName;
