@@ -72,7 +72,7 @@ export const getOrganizationSelection = cache(
 
     return {
       organizations,
-      selected:
+      selectedOrganization:
         organizations.find(
           (organization) => organization.id === savedSelectedOrganizationId,
         ) ?? oldestMembership,

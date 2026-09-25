@@ -40,7 +40,7 @@ export type OrganizationMembership = OrganizationSummary & {
  */
 export type OrganizationSelection = {
   organizations: OrganizationMembership[];
-  selected: OrganizationMembership;
+  selectedOrganization: OrganizationMembership;
 };
 
 /**
