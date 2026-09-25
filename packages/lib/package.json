@@ -11,7 +11,8 @@
     "./schemas/organization": "./src/schemas/organization/organization.schemas.ts",
     "./utils/auth": "./src/utils/auth/safe-redirect.ts",
     "./utils/formatting": "./src/utils/formatting/date.ts",
-    "./utils/organization": "./src/utils/organization/organization-member.ts"
+    "./utils/organization": "./src/utils/organization/organization-member.ts",
+    "./hooks/organization": "./src/hooks/organization/use-organization-access.ts"
   },
   "scripts": {
     "lint": "eslint .",
