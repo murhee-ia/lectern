@@ -4,6 +4,7 @@ import { getNameInitials } from '@repo/lib/utils/organization';
 const AVATAR_SIZE_CLASSES = {
   sm: 'size-9 text-xs',
   lg: 'size-12 text-sm',
+  xl: 'size-16 text-lg',
 } as const;
 
 /**
