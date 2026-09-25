@@ -1,7 +1,8 @@
--- How every membership came to exist,
+-- How every membership came to exist, and a link from each to its member profile,
 -- An Admin restricting one member from joining or starting team sessions, though never from one they started,
--- The signed-in user's permissions, answered by has_permission() instead of re-derived in TypeScript, and
--- An Admin renaming their organization.
+-- The signed-in user's permissions, answered by has_permission() instead of re-derived in TypeScript,
+-- An Admin renaming their organization, and
+-- Invitations kept as a log: canceled and resent, but never deleted.
 -- Depends on 20260924073928 for the members.restrict permission.
 -- Every object below is written idempotently, so that this migration can be re-run without error.
 
@@ -61,6 +62,14 @@ COMMENT ON COLUMN memberships.join_method IS 'How this membership came to exist.
 ALTER TABLE organizations DROP CONSTRAINT IF EXISTS organizations_name_length;
 ALTER TABLE organizations ADD CONSTRAINT organizations_name_length
   CHECK (char_length(trim(name)) BETWEEN 1 AND 100);
+
+-- A second foreign key on user_id, beside the existing one to auth.users. It's
+-- what lets PostgREST embed member_profiles in a memberships query, so a
+-- member list is one request instead of two. Always satisfied: the profile is
+-- created by the auth.users trigger, before any membership can exist.
+ALTER TABLE memberships DROP CONSTRAINT IF EXISTS memberships_user_id_profile_fkey;
+ALTER TABLE memberships ADD CONSTRAINT memberships_user_id_profile_fkey
+  FOREIGN KEY (user_id) REFERENCES member_profiles (id) ON DELETE CASCADE;
 
 
 -- ============================================================================
@@ -343,6 +352,30 @@ CREATE POLICY "admins can update their organization" ON organizations
   TO authenticated
   USING (has_permission(id, 'org.settings.manage'))
   WITH CHECK (has_permission(id, 'org.settings.manage'));
+
+-- Replaces the FOR ALL policy, which allowed DELETE. An invitation is never
+-- deleted — the invitations page is the organization's log of them — so
+-- canceling and resending are UPDATEs, and no DELETE policy exists.
+DROP POLICY IF EXISTS "admins manage invites for their organizations" ON organization_invites;
+
+DROP POLICY IF EXISTS "admins can view their organization's invites" ON organization_invites;
+CREATE POLICY "admins can view their organization's invites" ON organization_invites
+  FOR SELECT
+  TO authenticated
+  USING (has_permission(organization_id, 'invites.manage') OR is_platform_admin());
+
+DROP POLICY IF EXISTS "admins can send invites" ON organization_invites;
+CREATE POLICY "admins can send invites" ON organization_invites
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (has_permission(organization_id, 'invites.manage'));
+
+DROP POLICY IF EXISTS "admins can cancel and resend invites" ON organization_invites;
+CREATE POLICY "admins can cancel and resend invites" ON organization_invites
+  FOR UPDATE
+  TO authenticated
+  USING (has_permission(organization_id, 'invites.manage') OR is_platform_admin())
+  WITH CHECK (has_permission(organization_id, 'invites.manage') OR is_platform_admin());
 
 
 -- ============================================================================
