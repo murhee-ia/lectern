@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@repo/supabase/server';
+import { getCurrentUser } from '@repo/server/auth/queries';
 import { createServiceRoleSupabaseClient } from '@repo/supabase/admin';
 import { updateProfileSchema } from '@repo/lib/schemas/profile';
 
@@ -16,13 +17,13 @@ export async function updateProfileAction(
     lastName,
   });
   if (!parsed.success) {
-    return { error: 'Each name field can be at most 80 characters.' };
+    return {
+      error: 'Each name field is required and can be at most 80 characters.',
+    };
   }
 
   const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) {
     return { error: 'Not signed in.' };
   }
@@ -30,9 +31,9 @@ export async function updateProfileAction(
   const { error } = await supabase
     .from('member_profiles')
     .update({
-      display_name: parsed.data.displayName || null,
-      first_name: parsed.data.firstName || null,
-      last_name: parsed.data.lastName || null,
+      display_name: parsed.data.displayName,
+      first_name: parsed.data.firstName,
+      last_name: parsed.data.lastName,
     })
     .eq('id', user.id);
 
@@ -45,9 +46,7 @@ export async function updateProfileAction(
 
 export async function setAvatarAction(): Promise<{ error?: string }> {
   const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) {
     return { error: 'Not signed in.' };
   }
@@ -66,9 +65,7 @@ export async function setAvatarAction(): Promise<{ error?: string }> {
 
 export async function deleteAccountAction(): Promise<{ error?: string }> {
   const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     return { error: 'Not signed in.' };
