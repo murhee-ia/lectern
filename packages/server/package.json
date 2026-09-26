@@ -5,8 +5,8 @@
   "exports": {
     "./auth": "./src/auth/auth.actions.ts",
     "./auth/queries": "./src/auth/auth.queries.ts",
-    "./auth/profile/queries": "./src/auth/profile.queries.ts",
     "./auth/profile": "./src/auth/profile.actions.ts",
+    "./auth/profile/queries": "./src/auth/profile.queries.ts",
     "./organization": "./src/organization/organization.actions.ts",
     "./organization/queries": "./src/organization/organization.queries.ts"
   },
