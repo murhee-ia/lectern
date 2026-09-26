@@ -28,6 +28,14 @@ export function compareOrganizationRoles(
 }
 
 /**
+ * Every role, most to least privileged. Built from the rank map, whose type
+ * requires every role in the database enum, so a new role can't be missing.
+ */
+export const ORGANIZATION_ROLES = (
+  Object.keys(ORGANIZATION_ROLE_RANK) as OrganizationRole[]
+).sort(compareOrganizationRoles);
+
+/**
  * The name to show for a member: their display name, else their first and
  * last name. Same fallback order the signup trigger uses
  * when it resolves display_name, so a name never reads differently depending
