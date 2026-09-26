@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import { getNameInitials } from '@repo/lib/utils/organization';
+import { getNameInitials } from '@repo/lib/utils/organization/members';
 
 const AVATAR_SIZE_CLASSES = {
   sm: 'size-9 text-xs',

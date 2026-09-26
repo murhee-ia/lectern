@@ -9,10 +9,13 @@
     "./schemas/auth": "./src/schemas/auth/auth.schemas.ts",
     "./schemas/profile": "./src/schemas/auth/profile.schemas.ts",
     "./schemas/organization": "./src/schemas/organization/organization.schemas.ts",
-    "./utils/auth": "./src/utils/auth/safe-redirect.ts",
-    "./utils/formatting": "./src/utils/formatting/date.ts",
-    "./utils/organization": "./src/utils/organization/organization-member.ts",
-    "./hooks/organization": "./src/hooks/organization/use-organization-access.ts"
+    "./utils/auth/safe-redirect": "./src/utils/auth/safe-redirect.ts",
+    "./utils/formatting/date": "./src/utils/formatting/date.ts",
+    "./utils/organization/members": "./src/utils/organization/organization-member.ts",
+    "./hooks/use-organization-access": "./src/hooks/organization/use-organization-access.ts",
+    "./hooks/use-member-list": "./src/hooks/organization/use-member-list-table.ts",
+    "./hooks/use-keyboard-only-focus-return": "./src/hooks/shared/use-keyboard-only-focus-return.ts",
+    "./hooks/use-list-table": "./src/hooks/shared/use-list-table.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -21,7 +24,8 @@
   },
   "dependencies": {
     "zod": "catalog:",
-    "@repo/types": "workspace:*"
+    "@repo/types": "workspace:*",
+    "@tanstack/react-table": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

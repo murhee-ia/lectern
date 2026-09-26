@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useSelectedOrganizationStore } from '@/lib/stores/server-mirror-stores/selected-organization.store';
+import { useSelectedOrganizationStore } from '@/lib/stores/selected-organization.store';
 
 /**
  * The effective selected-organization id: falls back to

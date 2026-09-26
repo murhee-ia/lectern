@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import type { OrganizationRole } from '@repo/types/organization';
-import { formatOrganizationRole } from '@repo/lib/utils/organization';
+import { formatOrganizationRole } from '@repo/lib/utils/organization/members';
 
 const ROLE_BADGE_CLASSES: Record<OrganizationRole, string> = {
   admin: 'badge-highlight',

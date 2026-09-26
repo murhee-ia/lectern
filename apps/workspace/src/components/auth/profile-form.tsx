@@ -9,7 +9,7 @@ import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
 import { updateProfileSchema } from '@repo/lib/schemas/profile';
 
-import { updateProfileAction } from '@/lib/actions/auth/auth.actions';
+import { updateProfileAction } from '@/lib/actions/auth.actions';
 
 export function ProfileForm({
   initialDisplayName,

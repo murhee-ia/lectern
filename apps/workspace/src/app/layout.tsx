@@ -5,7 +5,7 @@ import {
   getOrganizationAccess,
   getOrganizationSelection,
 } from '@repo/server/organization/queries';
-import { OrganizationAccessProvider } from '@repo/lib/hooks/organization';
+import { OrganizationAccessProvider } from '@repo/lib/hooks/use-organization-access';
 import { OrganizationSwitcher } from '@/components/organization/organization-switcher';
 import './globals.css';
 

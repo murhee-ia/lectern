@@ -4,10 +4,10 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@repo/ui/components/ui/button';
 import type { OrganizationMembership } from '@repo/types/organization';
-import { formatOrganizationRole } from '@repo/lib/utils/organization';
+import { formatOrganizationRole } from '@repo/lib/utils/organization/members';
 import { selectOrganizationAction } from '@repo/server/organization';
 import { useSelectedOrganizationId } from '@/lib/hooks/use-selected-organization-id';
-import { useSelectedOrganizationStore } from '@/lib/stores/server-mirror-stores/selected-organization.store';
+import { useSelectedOrganizationStore } from '@/lib/stores/selected-organization.store';
 
 export function OrganizationSwitcher({
   organizations,

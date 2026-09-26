@@ -12,7 +12,7 @@ import { VoiceWaveform } from '@repo/ui/components/brand/voice-waveform';
 import { signUpSchema } from '@repo/lib/schemas/auth';
 import { createBrowserSupabaseClient } from '@repo/supabase/browser';
 
-import { isDisposableEmailDomain } from '@/lib/utils/auth/disposable-email';
+import { isDisposableEmailDomain } from '@/lib/utils/disposable-email';
 
 import { TurnstileWidget } from '@/components/auth/turnstile-widget';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';

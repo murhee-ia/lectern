@@ -12,7 +12,7 @@ import {
 import { createBrowserSupabaseClient } from '@repo/supabase/browser';
 import { MemberAvatar } from '@repo/ui/components/customs/member-avatar';
 
-import { setAvatarAction } from '@/lib/actions/auth/auth.actions';
+import { setAvatarAction } from '@/lib/actions/auth.actions';
 
 export function AvatarUpload({
   userId,

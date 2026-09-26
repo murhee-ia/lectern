@@ -4,8 +4,8 @@ import {
   getCurrentMemberProfile,
 } from '@repo/server/auth/profile/queries';
 import { getCurrentMemberships } from '@repo/server/organization/queries';
-import { resolveMemberDisplayName } from '@repo/lib/utils/organization';
-import { formatRelativeDate } from '@repo/lib/utils/formatting';
+import { resolveMemberDisplayName } from '@repo/lib/utils/organization/members';
+import { formatRelativeDate } from '@repo/lib/utils/formatting/date';
 import { SignOutButton } from '@repo/ui/components/customs/signout-button';
 import { signOutAction } from '@repo/server/auth';
 

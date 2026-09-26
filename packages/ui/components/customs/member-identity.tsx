@@ -1,5 +1,5 @@
 import type { MemberIdentity as MemberIdentityShape } from '@repo/types/auth';
-import { resolveMemberDisplayName } from '@repo/lib/utils/organization';
+import { resolveMemberDisplayName } from '@repo/lib/utils/organization/members';
 import { MemberAvatar } from '@repo/ui/components/customs/member-avatar';
 
 /**

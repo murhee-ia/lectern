@@ -1,6 +1,6 @@
 import { getCurrentMemberProfile } from '@repo/server/auth/profile/queries';
 import { getOrganizationSelection } from '@repo/server/organization/queries';
-import { resolveMemberDisplayName } from '@repo/lib/utils/organization';
+import { resolveMemberDisplayName } from '@repo/lib/utils/organization/members';
 import { OrganizationSummaryCard } from '@/components/organization/organization-summary-card';
 
 export default async function WorkspaceHomePage({
