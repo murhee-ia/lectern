@@ -285,13 +285,15 @@ comment, so the gap between the UI and the schema stays visible.
 maps to (`MemberProfile`); `packages/server` and the apps import both from
 `@repo/types`.
 
-### `packages/lib` — cross-app Zod schemas and utils (`hooks/`, `stores/` reserved)
+### `packages/lib` — cross-app Zod schemas, utils, and hooks (`stores/` reserved)
 
-Wraps its content in `src/`. `src/schemas/<feature>/<feature>.schemas.ts`
-and `src/utils/<feature>/<name>.ts` today; `src/hooks/` and
-`src/stores/{ui-orchestration-stores,server-mirror-stores}/` are reserved
-for the same promotion rule once an app-local hook or store is genuinely
-needed by a second app — see §2 for the two `stores/` categories. Each feature file is its own subpath
+Wraps its content in `src/`: `src/schemas/<feature>/<feature>.schemas.ts`,
+`src/utils/<feature>/<name>.ts`, and `src/hooks/<feature>/use-<name>.ts`
+(`shared/` for hooks with no feature). Each hook is exported by its own name,
+`@repo/lib/hooks/use-<name>`, without the folder.
+`src/stores/{ui-orchestration-stores,server-mirror-stores}/` is reserved for
+the same promotion rule once an app-local store is genuinely needed by a
+second app — see §2 for the two `stores/` categories. Each feature file is its own subpath
 export (`@repo/lib/schemas/auth`, `@repo/lib/utils/auth`, ...), mirroring
 how `@repo/supabase` exposes `/server`, `/admin`, `/browser` rather than
 one flat barrel, so an app only pulls in the slice it actually imports.
@@ -334,6 +336,51 @@ internally, never accepts one as a parameter.
   `@repo/server` itself, so this package never depends on packages above
   it in the stack). Same promotion rule as everything else in this
   section — only once genuinely needed by 2+ apps identically.
+
+  **Every list of rows renders through `ResponsiveTableLayout`**
+  (`@repo/ui/components/customs/responsive-table-layout`): members, invitations,
+  and later requests, library items, and sessions. The caller passes
+  columns, each with a heading, a width, a placement (`primary`, `detail`, or
+  `action`), and a `cell` that renders it. The table owns the one layout:
+  headings from md up, and below md the primary cell with the action at its
+  right and the details on one wrapping line beneath. It has no hooks, so a
+  Server Component can use it. Its optional `selection` adds a checkbox to
+  every row, for bulk actions.
+
+  **Every list that searches, sorts, filters, or pages uses the same kit.**
+  `useListTable()` (`@repo/lib/hooks/use-list-table`) is the only place
+  TanStack Table is set up. It gives a list search, sort, one filter, pages of
+  20, and optional row selection, with rules every list shares: any change to
+  the search, a filter, or the sort goes back to page 1, and a selection
+  survives paging and sorting but clears when the search or a filter changes.
+  Each list defines its TanStack columns once at module level (a new array
+  each render would send it back to page 1), including one with the id
+  `SEARCH_COLUMN_ID` holding its search text. Search matches every typed word,
+  in any order and any case. The screen around the rows comes from
+  `ListTableToolbar`, `ListTableCount`, `ListTableNoMatches`, and
+  `ListTablePagination` (`@repo/ui/components/customs/list-table-*`), all
+  inside a `ListTableFrame`. The frame keeps the list no taller than the
+  screen, so only the rows scroll and the pager stays at the bottom of the
+  screen. Pass the page number as the table's `scrollResetKey` so each new
+  page starts at its first row. The
+  members lists share `useMemberListTable()` and `useMemberDetailListTable()`
+  (`@repo/lib/hooks/use-member-list`), so the workspace directory
+  and the console list search, sort, and filter the same way. Only the
+  console's list searches email. A list whose text depends on the clock, such
+  as expiry or "3 hours ago", works it out on the server and passes it in,
+  so hydration can't render something different.
+
+  **Choices and menus are two different dropdowns.** A choice, such as a
+  sort order or a filter, uses `DropdownSelectTrigger` and
+  `DropdownSelectContent` (`@repo/ui/components/customs/dropdown-select`): a
+  field-style trigger that never scales, with its list directly beneath it at
+  the same width. An action menu, such as a row's "…", uses the shadcn
+  `DropdownMenuContent`. Every Radix menu gets its `onCloseAutoFocus` from
+  `useKeyboardOnlyFocusReturn()`
+  (`@repo/lib/hooks/use-keyboard-only-focus-return`), and
+  `DropdownSelectContent` already does. Focus then returns to the trigger,
+  with its ring, only after a keyboard close, not after a mouse one.
+
 - **`apps/<name>/src/components/<feature>/`** — feature-specific
   compositions that _use_ those primitives (e.g. `DeleteAccountButton`
   renders a shadcn `Button` with `variant="destructive"` plus this
@@ -453,6 +500,82 @@ that shouldn't show it even by mistake.
 organization's member list the page already holds, and refetch that list when
 an id is missing, rather than looking people up one at a time.
 
+### Invitations
+
+An Admin invites by email from the org console. Every change to an invitation
+goes through a SQL function: the table has no write policies, and no app role
+can insert, update, or delete it directly.
+
+- **Three statuses:** `pending`, `accepted`, `canceled`. An invitation is
+  **never deleted**; only its status changes. A trigger keeps its
+  organization, email, sender, and `created_at` fixed, and an accepted one
+  can't change at all.
+- **"Expired" isn't a status.** It comes from `expires_at`, 7 days after
+  sending: a `pending` invitation past it is still `pending`, and its link no
+  longer works.
+- **The link carries a random token; the table stores only its hash**
+  (`token_hash`, which no app role can read). A lost link can't be recovered,
+  only replaced by sending again.
+- **One open invitation per address per organization.** Addresses are stored
+  trimmed and lower-case, and inviting an address that already has an open
+  invitation refreshes that row instead of adding one.
+- **The plan cap counts invitations.** Members plus pending invitations whose
+  link still works can't exceed `max_members`: the organization's override,
+  or else its plan's. Free allows only its one member, so it can't invite.
+- **The functions:**
+  - `send_organization_invitation()` returns the raw token, for the email.
+  - `cancel_organization_invitations()` acts only on pending invitations whose
+    link still works.
+  - `resend_organization_invitations()` acts only on canceled invitations and
+    expired pending ones. It refreshes the same row with a new token and
+    expiry and sets it back to `pending`, so `created_at` stays the first time
+    it was sent, which is why the page labels it "First invited".
+  - `get_organization_invitation_preview(token)` gives the link's pages what
+    they need, and works signed out.
+  - `accept_organization_invitation(token)` creates the membership
+    (`join_method = 'email_invitation'`) and marks the invitation `accepted`,
+    with `accepted_at` and `accepted_by`.
+
+  The Admin's three check `invites.manage`. Cancel and resend take many ids
+  and skip the ones they don't apply to.
+
+- **Never reveal membership to the Admin.** Inviting an address that already
+  belongs is accepted like any other and sits pending in the log. Only the
+  invitee, on opening the link, is told they already belong, and the
+  invitation is left as it was. Whether an address has an account is used only
+  by the link's own pages, never shown to the Admin.
+- **The link's path.** The link opens `/invitation?token=` in marketing. It
+  sends a signed-out invitee to sign in, or to sign up when the address has no
+  account, with the email prefilled and locked, the token carried as
+  `invitation`, and `next` pointing at the workspace's `/invitations/accept`.
+  Matching always uses the sign-in email (`auth.users.email`).
+- **No account is ever created for a different address.** The locked field
+  covers email sign-up. Google needs more, because Supabase's own Google
+  sign-in creates the account the moment Google answers, before Lectern sees
+  the address. So from an invitation, the Google button goes through Lectern's
+  routes instead (`/auth/invitation/google`, then `…/callback`):
+  - Lectern swaps Google's code for the ID token itself and compares its
+    address with the invitation's.
+  - Only on a match does it call `signInWithIdToken()`, which is when Supabase
+    signs the person in or creates the account.
+  - A different address goes back to the form with nothing created.
+  - Every URL in this flow is built on `NEXT_PUBLIC_MARKETING_URL`, whose
+    `/auth/invitation/google/callback` must be registered as a redirect URI on
+    the Google OAuth client, once per environment.
+- **The accept dialog has one way on: Accept.** There's no decline and no
+  close. Someone who doesn't want the organization accepts and leaves it.
+  Only when Accept can't work, on the wrong account or a dead link, does the
+  dialog offer a way out instead.
+- **The invitations page is a log** of every `pending` and `canceled`
+  invitation, however old. An accepted invitation leaves it, and the person
+  appears on the members list instead.
+- **Email goes through `sendEmail()`** (`packages/server/src/notification/email.ts`),
+  over SMTP set by `EMAIL_SMTP_HOST`, `EMAIL_SMTP_PORT`, and `EMAIL_FROM`, plus
+  `EMAIL_SMTP_USER` and `EMAIL_SMTP_PASSWORD` where the server needs them.
+  Locally that's the Supabase stack's Mailpit: SMTP on 54325, inbox on 54324.
+  If the email fails, the invitation is still saved, and the Admin is told to
+  send it again.
+
 ---
 
 ## 8. CONSIDERATION — for future implementations
@@ -500,11 +623,15 @@ delete it here.
   toast "you don't have permission" when it's clicked.
 - **The initials avatar could take a colour derived from the user id**, stable
   per person, so people stay recognizable without a photo.
+- **A loading placeholder for tables**: a `ResponsiveTableSkeleton` reading
+  the same headings and widths, for a `loading.tsx`. The column definitions
+  would then need to live in files without `'use client'`, so a Server
+  Component can import them.
 
 ### Schema
 
 - **Columns that still point at a member through `auth.users` alone:**
-  `organizations.created_by`, `organization_invites.invited_by`, and
+  `organizations.created_by` and
   `membership_permission_restrictions.restricted_by`. Give each its
   `member_profiles` foreign key (see "Showing people" in §7) once a screen
   shows that person.
@@ -528,42 +655,3 @@ delete it here.
   Nothing else reads those columns: every other `organizations` read asks
   only for `name` and `plan`, and the functions that create memberships run
   as their owner.
-
-### Invitations — decided, not built yet
-
-The email-invitation flow is only partly built. These are the decided rules,
-recorded so the gaps below aren't mistaken for the design.
-
-- **Three statuses:** `pending`, `accepted`, `canceled`. An invitation is
-  **never deleted**; only its status changes, and what the Admin can do
-  depends on it.
-- **"Expired" isn't a status.** It comes from `expires_at`: a `pending`
-  invitation past its expiry is still `pending`, and its link no longer works.
-- **The invitations page lists every `pending` and `canceled` invitation,
-  however old.** It doubles as the organization's invitation log.
-- **`accepted` invitations don't appear there.** Accepting creates a
-  membership (`join_method = 'email_invitation'`), so that person appears on
-  the members list instead.
-- **Actions by state:**
-  - `pending`, still valid → **Cancel**: status becomes `canceled`, and the
-    link already sent stops working. Cancel only stops an invitation.
-  - `pending`, expired → **Resend**.
-  - `canceled` → **Resend**.
-- **Resend refreshes the same row**, with a new token and expiry, and sets
-  the status back to `pending`. The action is then **Cancel** again while the
-  new link is valid. An Admin can keep resending until the invitation is
-  accepted, or leave it pending with an expired link indefinitely. Because
-  the row is refreshed rather than replaced, `created_at` stays the first time
-  it was sent, which is why the page labels it "First invited".
-- **Once accepted**, it leaves the invitations page for the members list.
-
-**Built so far:** `getOrganizationInvitations()` returns `pending` and
-`canceled` rows, and the page shows each as Pending, Expired or Canceled with
-its action; the buttons don't act yet. RLS allows viewing, sending and
-updating invitations, with no DELETE policy.
-
-**Deferred until the flow is built**, since it's a database change:
-`organization_invites.status` is still unconstrained text, and needs a
-`CHECK (status IN ('pending', 'accepted', 'canceled'))` or an enum. A
-`last_sent_at` column would also let the page show when an invitation was
-last resent, not only first sent.
