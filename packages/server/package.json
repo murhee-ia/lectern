@@ -8,7 +8,8 @@
     "./auth/profile": "./src/auth/profile.actions.ts",
     "./auth/profile/queries": "./src/auth/profile.queries.ts",
     "./organization": "./src/organization/organization.actions.ts",
-    "./organization/queries": "./src/organization/organization.queries.ts"
+    "./organization/queries": "./src/organization/organization.queries.ts",
+    "./organization/invitation-email": "./src/organization/invitation-email.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -16,23 +17,26 @@
     "test": "echo \"no tests yet\" && exit 0"
   },
   "dependencies": {
+    "@repo/lib": "workspace:*",
     "@repo/supabase": "workspace:*",
     "@repo/types": "workspace:*",
     "@supabase/supabase-js": "catalog:",
+    "nodemailer": "^10.0.10",
     "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "next": "catalog:",
-    "typescript": "catalog:",
-    "eslint": "catalog:",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19",
+    "eslint": "catalog:",
+    "next": "catalog:",
     "react": "catalog:",
-    "@types/react": "^19"
+    "typescript": "catalog:"
   },
   "peerDependencies": {
-    "react": "^19",
-    "next": "^16"
+    "next": "^16",
+    "react": "^19"
   }
 }
