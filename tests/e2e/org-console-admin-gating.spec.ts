@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 
-test("org-console: only the org's Admin can open its member list; a Member sees it as non-clickable and gets a 404 by URL", async ({
+test("org-console: only the org's Admin can open its console; a Member sees it as non-clickable, gets a 404 on every console URL, and sees co-members read-only in the workspace", async ({
   browser,
 }) => {
   const admin = createClient(
@@ -16,6 +16,7 @@ test("org-console: only the org's Admin can open its member list; a Member sees 
       email: adminEmail,
       password: 'correcthorsebattery',
       email_confirm: true,
+      user_metadata: { first_name: 'Console', last_name: 'Admin' },
     });
   if (adminCreateError) throw adminCreateError;
 
@@ -55,6 +56,7 @@ test("org-console: only the org's Admin can open its member list; a Member sees 
       email: memberEmail,
       password: 'correcthorsebattery',
       email_confirm: true,
+      user_metadata: { first_name: 'Console', last_name: 'Member' },
     });
   if (memberCreateError) throw memberCreateError;
 
@@ -81,7 +83,7 @@ test("org-console: only the org's Admin can open its member list; a Member sees 
   );
   if (joinError) throw joinError;
 
-  // --- Admin, for real, in the browser: the org is a link, and the detail page lists both members ---
+  // --- Admin, for real, in the browser: the org is a link to its console dashboard ---
   // A fresh generateLink call is needed here — the RPC-only link above was
   // already consumed by asOrgAdmin.auth.verifyOtp() and can't be replayed.
   const { data: adminBrowserLink, error: adminBrowserLinkError } =
@@ -105,11 +107,19 @@ test("org-console: only the org's Admin can open its member list; a Member sees 
   await expect(adminPage).toHaveURL(
     `http://127.0.0.1:3001/organizations/${organizationId}`,
   );
-  await expect(adminPage.getByText(adminEmail)).toBeVisible();
+  await expect(
+    adminPage.getByRole('heading', { level: 1, name: organization.name }),
+  ).toBeVisible();
+  await expect(adminPage.getByRole('link', { name: /Members/ })).toBeVisible();
+
+  // The console's member list is the one place an email address is shown.
+  await adminPage.goto(
+    `http://127.0.0.1:3001/organizations/${organizationId}/members`,
+  );
   await expect(adminPage.getByText(memberEmail)).toBeVisible();
   await adminContext.close();
 
-  // --- Member, for real, in the browser: same org renders non-clickable, and the URL 404s directly ---
+  // --- Member, for real, in the browser: same org renders non-clickable, and every console URL 404s ---
   const { data: memberBrowserLink, error: memberBrowserLinkError } =
     await admin.auth.admin.generateLink({
       type: 'magiclink',
@@ -134,6 +144,27 @@ test("org-console: only the org's Admin can open its member list; a Member sees 
     `http://127.0.0.1:3001/organizations/${organizationId}`,
   );
   expect(detailResponse?.status()).toBe(404);
+
+  // The Admin-only gate sits on the organization's layout, so it has to hold
+  // for every section beneath it — not just the dashboard.
+  const sectionResponse = await memberPage.goto(
+    `http://127.0.0.1:3001/organizations/${organizationId}/members`,
+  );
+  expect(sectionResponse?.status()).toBe(404);
+
+  // The workspace, by contrast, shows every member who's in the organization
+  // — read-only, whatever their role, and by name only. The Member joined
+  // this organization before their own org-of-one was created, so it's the
+  // one selected.
+  await memberPage.goto('http://127.0.0.1:3002/members');
+  await expect(
+    memberPage.getByText('Console Admin', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    memberPage.getByText('Console Member', { exact: true }),
+  ).toBeVisible();
+  await expect(memberPage.getByText(adminEmail)).toHaveCount(0);
+  await expect(memberPage.getByText(memberEmail)).toHaveCount(0);
   await memberContext.close();
 
   await admin.auth.admin.deleteUser(adminCreated!.user!.id);
