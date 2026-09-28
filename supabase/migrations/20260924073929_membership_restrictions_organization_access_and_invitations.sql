@@ -792,6 +792,10 @@ CREATE POLICY "admins can update their organization" ON organizations
   USING (has_permission(id, 'org.settings.manage'))
   WITH CHECK (has_permission(id, 'org.settings.manage'));
 
+-- The first migration's catch-all invite policy. Invitations are written only
+-- through the functions above, so viewing is all a policy still grants.
+DROP POLICY IF EXISTS "admins manage invites for their organizations" ON organization_invites;
+
 DROP POLICY IF EXISTS "admins can view their organization's invites" ON organization_invites;
 CREATE POLICY "admins can view their organization's invites" ON organization_invites
   FOR SELECT
