@@ -2,7 +2,8 @@
 -- An Admin restricting one member from joining or starting team sessions, though never from one they started,
 -- The signed-in user's permissions, answered by has_permission() instead of re-derived in TypeScript,
 -- An Admin renaming their organization, and
--- Invitations kept as a log: canceled and resent, but never deleted.
+-- Email invitations: sent, canceled, resent, and accepted only through the
+-- functions below, and kept as a log that is never deleted.
 -- Depends on 20260924073928 for the members.restrict permission.
 -- Every object below is written idempotently, so that this migration can be re-run without error.
 
@@ -52,6 +53,19 @@ ALTER TABLE memberships ADD COLUMN IF NOT EXISTS join_method membership_join_met
 
 COMMENT ON COLUMN memberships.join_method IS 'How this membership came to exist. Fixed at creation. Admin handoff changes role but never this.';
 
+-- An invitation link carries a token; only its hash is stored, so reading the
+-- table never yields a working link.
+ALTER TABLE organization_invites ADD COLUMN IF NOT EXISTS token_hash text NOT NULL;
+ALTER TABLE organization_invites DROP COLUMN IF EXISTS token;
+
+ALTER TABLE organization_invites ADD COLUMN IF NOT EXISTS accepted_at timestamptz;
+ALTER TABLE organization_invites ADD COLUMN IF NOT EXISTS accepted_by uuid;
+
+COMMENT ON COLUMN organization_invites.token_hash IS 'SHA-256 of the token in the emailed link. Only the invitation functions compare against it; no role can read it.';
+COMMENT ON COLUMN organization_invites.created_at IS 'When the invitation was first sent. Resending refreshes the same row, so this never moves.';
+COMMENT ON COLUMN organization_invites.accepted_at IS 'When the invitee accepted, creating their membership. Set only with status accepted.';
+COMMENT ON COLUMN organization_invites.accepted_by IS 'The account that accepted, whose sign-in email matched the invitation.';
+
 
 -- ============================================================================
 -- C O N S T R A I N T S
@@ -71,6 +85,54 @@ ALTER TABLE memberships DROP CONSTRAINT IF EXISTS memberships_user_id_profile_fk
 ALTER TABLE memberships ADD CONSTRAINT memberships_user_id_profile_fkey
   FOREIGN KEY (user_id) REFERENCES member_profiles (id) ON DELETE CASCADE;
 
+-- Three statuses; "expired" is a pending invitation past expires_at, not a status.
+ALTER TABLE organization_invites DROP CONSTRAINT IF EXISTS organization_invites_status_check;
+ALTER TABLE organization_invites ADD CONSTRAINT organization_invites_status_check
+  CHECK (status IN ('pending', 'accepted', 'canceled'));
+
+-- Stored the way every function compares it: trimmed and lowercase.
+ALTER TABLE organization_invites DROP CONSTRAINT IF EXISTS organization_invites_email_normalized;
+ALTER TABLE organization_invites ADD CONSTRAINT organization_invites_email_normalized
+  CHECK (email = lower(btrim(email)) AND email <> '');
+
+-- An accepted invitation always records when; no other status does.
+ALTER TABLE organization_invites DROP CONSTRAINT IF EXISTS organization_invites_acceptance_recorded;
+ALTER TABLE organization_invites ADD CONSTRAINT organization_invites_acceptance_recorded
+  CHECK ((status = 'accepted') = (accepted_at IS NOT NULL));
+
+-- Both people an invitation points at get a member_profiles key beside their
+-- auth.users one, with the same ON DELETE, so a query can embed them.
+ALTER TABLE organization_invites DROP CONSTRAINT IF EXISTS organization_invites_invited_by_profile_fkey;
+ALTER TABLE organization_invites ADD CONSTRAINT organization_invites_invited_by_profile_fkey
+  FOREIGN KEY (invited_by) REFERENCES member_profiles (id);
+
+ALTER TABLE organization_invites DROP CONSTRAINT IF EXISTS organization_invites_accepted_by_fkey;
+ALTER TABLE organization_invites ADD CONSTRAINT organization_invites_accepted_by_fkey
+  FOREIGN KEY (accepted_by) REFERENCES auth.users (id) ON DELETE SET NULL;
+
+ALTER TABLE organization_invites DROP CONSTRAINT IF EXISTS organization_invites_accepted_by_profile_fkey;
+ALTER TABLE organization_invites ADD CONSTRAINT organization_invites_accepted_by_profile_fkey
+  FOREIGN KEY (accepted_by) REFERENCES member_profiles (id) ON DELETE SET NULL;
+
+
+-- ============================================================================
+-- I N D E X E S
+-- ============================================================================
+
+-- One open invitation per address per organization: inviting the same address
+-- again refreshes that row instead of adding another. Accepted rows stay as
+-- history and don't count, so someone removed later can be invited again.
+CREATE UNIQUE INDEX IF NOT EXISTS index_organization_invites_organization_id_email_unaccepted
+  ON organization_invites (organization_id, email)
+  WHERE status <> 'accepted';
+
+CREATE UNIQUE INDEX IF NOT EXISTS index_organization_invites_token_hash
+  ON organization_invites (token_hash);
+
+-- The invitations page lists newest first.
+CREATE INDEX IF NOT EXISTS index_organization_invites_organization_id_created_at
+  ON organization_invites (organization_id, created_at DESC);
+
 
 -- ============================================================================
 -- P R I V I L E G E S
@@ -78,6 +140,13 @@ ALTER TABLE memberships ADD CONSTRAINT memberships_user_id_profile_fkey
 
 REVOKE UPDATE ON organizations FROM public, anon, authenticated;
 GRANT UPDATE (name) ON organizations TO authenticated;
+
+-- Every invitation write goes through the functions below, and the token's
+-- hash is readable by no one: members get every other column.
+REVOKE INSERT, UPDATE, DELETE ON organization_invites FROM public, anon, authenticated;
+REVOKE SELECT ON organization_invites FROM public, anon, authenticated;
+GRANT SELECT (id, organization_id, email, role, invited_by, status, created_at, expires_at, accepted_at, accepted_by)
+  ON organization_invites TO authenticated;
 
 
 -- ============================================================================
@@ -127,6 +196,39 @@ CREATE TRIGGER memberships_clear_restrictions_on_role_change
   FOR EACH ROW
   WHEN (old.role IS DISTINCT FROM new.role)
   EXECUTE FUNCTION clear_membership_restrictions_on_role_change();
+
+-- Beyond what the functions already do: which organization, address, sender,
+-- and first-sent time an invitation has never change, an accepted invitation
+-- never changes at all, and only a pending one can become accepted. The
+-- allowed moves are pending → canceled, canceled → pending, pending →
+-- pending (a resend), and pending → accepted.
+CREATE OR REPLACE FUNCTION restrict_organization_invites_update() RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+  BEGIN
+    IF new.organization_id <> old.organization_id
+      OR new.email <> old.email
+      OR new.invited_by <> old.invited_by
+      OR new.created_at <> old.created_at
+    THEN
+      RAISE EXCEPTION 'An invitation''s organization, email, sender, and first-sent time never change';
+    END IF;
+    IF old.status = 'accepted' THEN
+      RAISE EXCEPTION 'An accepted invitation never changes';
+    END IF;
+    IF new.status = 'accepted' AND old.status <> 'pending' THEN
+      RAISE EXCEPTION 'Only a pending invitation can be accepted';
+    END IF;
+    RETURN new;
+  END;
+$$;
+
+DROP TRIGGER IF EXISTS organization_invites_restrict_update ON organization_invites;
+CREATE TRIGGER organization_invites_restrict_update
+  BEFORE UPDATE ON organization_invites
+  FOR EACH ROW
+  EXECUTE FUNCTION restrict_organization_invites_update();
 
 
 -- ============================================================================
@@ -305,6 +407,343 @@ $$;
 
 COMMENT ON FUNCTION can_join_team_session(uuid, uuid) IS 'True if the current user may join a team session in the given organization: they hold sessions.team.join, or they started that session and are still a member.';
 
+-- ---------------------------------------------------------------------------
+-- Email invitations
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION hash_invitation_token(invitation_token text) RETURNS text
+LANGUAGE sql
+IMMUTABLE
+SET search_path = public
+AS $$
+  SELECT encode(extensions.digest(invitation_token, 'sha256'), 'hex');
+$$;
+
+COMMENT ON FUNCTION hash_invitation_token(text) IS 'The stored form of an invitation link''s token. Internal to the invitation functions.';
+
+-- The organization's member cap: its plan's max_members, unless a Superadmin
+-- override sets its own. NULL means no cap.
+CREATE OR REPLACE FUNCTION organization_member_limit(check_organization_id uuid) RETURNS integer
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
+  SELECT coalesce((organization.limit_overrides ->> 'max_members')::integer, plan.max_members)
+    FROM organizations AS organization
+    JOIN plans AS plan ON plan.tier = organization.plan
+    WHERE organization.id = check_organization_id;
+$$;
+
+COMMENT ON FUNCTION organization_member_limit(uuid) IS 'How many members an organization may have: limit_overrides.max_members, else its plan''s max_members. NULL for no cap. Internal to the invitation functions.';
+
+-- Sends, or refreshes, the invitation for one address, and returns the token
+-- for the emailed link — the only time it exists outside the email.
+--
+-- Deliberately never says whether the address already belongs to a member:
+-- an Admin shouldn't learn which addresses have accounts here. Such an
+-- invitation just sits in the log; the invitee, on opening it, is told they
+-- already belong.
+CREATE OR REPLACE FUNCTION send_organization_invitation(
+  target_organization_id uuid,
+  invitee_email text,
+  invitee_role organization_role
+) RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  DECLARE
+    normalized_email text := lower(btrim(invitee_email));
+    invitation_token text := encode(extensions.gen_random_bytes(32), 'hex');
+    existing_invitation_id uuid;
+    member_limit integer;
+    reserved_count integer;
+  BEGIN
+    IF NOT has_permission(target_organization_id, 'invites.manage') THEN
+      RAISE EXCEPTION 'Not authorized';
+    END IF;
+    IF invitee_role = 'admin' THEN
+      RAISE EXCEPTION 'An invitation can''t make someone the Admin';
+    END IF;
+    IF normalized_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' THEN
+      RAISE EXCEPTION 'Enter a valid email address';
+    END IF;
+
+    -- One send at a time per organization, so two can't both fit the last slot.
+    PERFORM pg_advisory_xact_lock(hashtext('organization_invites:' || target_organization_id::text));
+
+    SELECT id INTO existing_invitation_id
+      FROM organization_invites
+      WHERE organization_id = target_organization_id
+        AND email = normalized_email
+        AND status <> 'accepted';
+
+    -- Members plus invitations whose link still works, not counting this
+    -- address's own open invitation, which the send replaces.
+    member_limit := organization_member_limit(target_organization_id);
+    IF member_limit IS NOT NULL THEN
+      SELECT
+          (SELECT count(*) FROM memberships WHERE organization_id = target_organization_id)
+        + (SELECT count(*) FROM organization_invites
+             WHERE organization_id = target_organization_id
+               AND status = 'pending'
+               AND expires_at > now()
+               AND id IS DISTINCT FROM existing_invitation_id)
+        INTO reserved_count;
+      IF reserved_count + 1 > member_limit THEN
+        RAISE EXCEPTION 'This organization has reached its member limit';
+      END IF;
+    END IF;
+
+    IF existing_invitation_id IS NOT NULL THEN
+      UPDATE organization_invites
+        SET status = 'pending',
+            role = invitee_role,
+            token_hash = hash_invitation_token(invitation_token),
+            expires_at = now() + interval '7 days'
+        WHERE id = existing_invitation_id;
+    ELSE
+      INSERT INTO organization_invites (organization_id, email, role, invited_by, token_hash)
+      VALUES (target_organization_id, normalized_email, invitee_role, auth.uid(), hash_invitation_token(invitation_token));
+    END IF;
+
+    RETURN invitation_token;
+  END;
+$$;
+
+COMMENT ON FUNCTION send_organization_invitation(uuid, text, organization_role) IS 'Creates the invitation for an address, or refreshes its open one, and returns the token for the emailed link. Needs invites.manage and room under the member cap. Never reveals whether the address already belongs to a member.';
+
+-- Resends the given invitations that can be resent — expired or canceled —
+-- each with a new token and 7 more days, and returns what the emails need.
+-- Any other ids are skipped, so a bulk selection can be passed as is.
+CREATE OR REPLACE FUNCTION resend_organization_invitations(
+  target_organization_id uuid,
+  invitation_ids uuid[]
+) RETURNS TABLE (
+  invitation_id uuid,
+  invitee_email text,
+  invitee_role organization_role,
+  invitation_token text
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  DECLARE
+    resendable_ids uuid[];
+    member_limit integer;
+    reserved_count integer;
+  BEGIN
+    IF NOT has_permission(target_organization_id, 'invites.manage') THEN
+      RAISE EXCEPTION 'Not authorized';
+    END IF;
+
+    PERFORM pg_advisory_xact_lock(hashtext('organization_invites:' || target_organization_id::text));
+
+    SELECT array_agg(invitation.id) INTO resendable_ids
+      FROM organization_invites AS invitation
+      WHERE invitation.organization_id = target_organization_id
+        AND invitation.id = ANY(invitation_ids)
+        AND (invitation.status = 'canceled'
+          OR (invitation.status = 'pending' AND invitation.expires_at <= now()));
+
+    IF resendable_ids IS NULL THEN
+      RETURN;
+    END IF;
+
+    -- Every resent invitation's link starts working again, so each takes a slot.
+    member_limit := organization_member_limit(target_organization_id);
+    IF member_limit IS NOT NULL THEN
+      SELECT
+          (SELECT count(*) FROM memberships WHERE organization_id = target_organization_id)
+        + (SELECT count(*) FROM organization_invites
+             WHERE organization_id = target_organization_id
+               AND status = 'pending'
+               AND expires_at > now())
+        INTO reserved_count;
+      IF reserved_count + cardinality(resendable_ids) > member_limit THEN
+        RAISE EXCEPTION 'This organization has reached its member limit';
+      END IF;
+    END IF;
+
+    RETURN QUERY
+      WITH new_tokens AS (
+        SELECT invitation.id, encode(extensions.gen_random_bytes(32), 'hex') AS token
+          FROM organization_invites AS invitation
+          WHERE invitation.id = ANY(resendable_ids)
+      ),
+      resent AS (
+        UPDATE organization_invites AS invitation
+          SET status = 'pending',
+              token_hash = hash_invitation_token(new_tokens.token),
+              expires_at = now() + interval '7 days'
+          FROM new_tokens
+          WHERE invitation.id = new_tokens.id
+          RETURNING invitation.id, invitation.email, invitation.role, new_tokens.token
+      )
+      SELECT resent.id, resent.email, resent.role, resent.token FROM resent;
+  END;
+$$;
+
+COMMENT ON FUNCTION resend_organization_invitations(uuid, uuid[]) IS 'Resends the given expired or canceled invitations, skipping any other ids, and returns each one''s address, role, and new token for the email. Needs invites.manage and room under the member cap.';
+
+-- Cancels the given invitations whose link still works; any other ids are
+-- skipped. The link already sent stops working at once.
+CREATE OR REPLACE FUNCTION cancel_organization_invitations(
+  target_organization_id uuid,
+  invitation_ids uuid[]
+) RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  DECLARE
+    canceled_count integer;
+  BEGIN
+    IF NOT has_permission(target_organization_id, 'invites.manage') THEN
+      RAISE EXCEPTION 'Not authorized';
+    END IF;
+
+    UPDATE organization_invites
+      SET status = 'canceled'
+      WHERE organization_id = target_organization_id
+        AND id = ANY(invitation_ids)
+        AND status = 'pending'
+        AND expires_at > now();
+
+    GET DIAGNOSTICS canceled_count = ROW_COUNT;
+    RETURN canceled_count;
+  END;
+$$;
+
+COMMENT ON FUNCTION cancel_organization_invitations(uuid, uuid[]) IS 'Cancels the given pending invitations whose link still works, skipping any other ids, and returns how many it canceled. Needs invites.manage.';
+
+-- What opening an invitation link shows, for whoever holds the link — signed
+-- in or not. Holding the token is what entitles the caller to this; whether
+-- the invited address has an account is answered only while the link still
+-- works, and only about that address.
+CREATE OR REPLACE FUNCTION get_organization_invitation_preview(invitation_token text) RETURNS TABLE (
+  organization_id uuid,
+  organization_name text,
+  invitee_email text,
+  invitee_role organization_role,
+  inviter_display_name text,
+  inviter_first_name text,
+  inviter_last_name text,
+  invitation_state text,
+  invitee_has_account boolean,
+  viewer_email_matches boolean,
+  viewer_is_member boolean
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  WITH invitation AS (
+    SELECT
+        invite.*,
+        CASE
+          WHEN invite.status = 'accepted' THEN 'accepted'
+          WHEN invite.status = 'canceled' THEN 'canceled'
+          WHEN invite.expires_at <= now() THEN 'expired'
+          ELSE 'pending'
+        END AS state
+      FROM organization_invites AS invite
+      WHERE invite.token_hash = hash_invitation_token(invitation_token)
+  )
+  SELECT
+      invitation.organization_id,
+      organization.name,
+      invitation.email,
+      invitation.role,
+      inviter.display_name,
+      inviter.first_name,
+      inviter.last_name,
+      invitation.state,
+      CASE WHEN invitation.state = 'pending' THEN EXISTS (
+        SELECT 1 FROM auth.users AS account WHERE lower(account.email) = invitation.email
+      ) END,
+      coalesce((
+        SELECT lower(account.email) = invitation.email
+          FROM auth.users AS account
+          WHERE account.id = auth.uid()
+      ), false),
+      EXISTS (
+        SELECT 1 FROM memberships AS membership
+          WHERE membership.organization_id = invitation.organization_id
+            AND membership.user_id = auth.uid()
+      )
+    FROM invitation
+    JOIN organizations AS organization ON organization.id = invitation.organization_id
+    LEFT JOIN member_profiles AS inviter ON inviter.id = invitation.invited_by;
+$$;
+
+COMMENT ON FUNCTION get_organization_invitation_preview(text) IS 'The organization, inviter, role, and state behind an invitation link, for its holder. Also whether the invited address has an account (only while the link works), and, when signed in, whether the viewer''s sign-in email matches and whether they already belong.';
+
+-- Joins the signed-in user to the invitation's own organization — never one
+-- the caller names — with the invitation's role. The sign-in email must match
+-- the invited address, whatever the sign-in method.
+--
+-- Someone who already belongs is refused and their invitation left exactly as
+-- it was, so the Admin's log can't reveal that the address was a member.
+CREATE OR REPLACE FUNCTION accept_organization_invitation(invitation_token text) RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  DECLARE
+    calling_user_id uuid := auth.uid();
+    calling_user_email text;
+    invitation organization_invites;
+    member_limit integer;
+  BEGIN
+    IF calling_user_id IS NULL THEN
+      RAISE EXCEPTION 'Not signed in';
+    END IF;
+
+    SELECT * INTO invitation
+      FROM organization_invites
+      WHERE token_hash = hash_invitation_token(invitation_token)
+      FOR UPDATE;
+
+    IF invitation.id IS NULL OR invitation.status <> 'pending' OR invitation.expires_at <= now() THEN
+      RAISE EXCEPTION 'This invitation is no longer valid';
+    END IF;
+
+    SELECT lower(email) INTO calling_user_email FROM auth.users WHERE id = calling_user_id;
+    IF calling_user_email IS DISTINCT FROM invitation.email THEN
+      RAISE EXCEPTION 'This invitation is for a different email address';
+    END IF;
+
+    IF EXISTS (
+      SELECT 1 FROM memberships
+        WHERE organization_id = invitation.organization_id AND user_id = calling_user_id
+    ) THEN
+      RAISE EXCEPTION 'You already belong to this organization';
+    END IF;
+
+    -- The invitation already held a slot, but a plan can shrink while it waits.
+    member_limit := organization_member_limit(invitation.organization_id);
+    IF member_limit IS NOT NULL
+      AND (SELECT count(*) FROM memberships WHERE organization_id = invitation.organization_id) >= member_limit
+    THEN
+      RAISE EXCEPTION 'This organization has reached its member limit';
+    END IF;
+
+    INSERT INTO memberships (user_id, organization_id, role, join_method)
+    VALUES (calling_user_id, invitation.organization_id, invitation.role, 'email_invitation');
+
+    UPDATE organization_invites
+      SET status = 'accepted', accepted_at = now(), accepted_by = calling_user_id
+      WHERE id = invitation.id;
+
+    RETURN invitation.organization_id;
+  END;
+$$;
+
+COMMENT ON FUNCTION accept_organization_invitation(text) IS 'Joins the signed-in user to the invitation''s organization with its role, if the link still works, their sign-in email matches, they don''t already belong, and the member cap allows. Marks it accepted and returns the organization''s id.';
+
 
 -- ============================================================================
 -- R O W   L E V E L   S E C U R I T Y
@@ -353,29 +792,11 @@ CREATE POLICY "admins can update their organization" ON organizations
   USING (has_permission(id, 'org.settings.manage'))
   WITH CHECK (has_permission(id, 'org.settings.manage'));
 
--- Replaces the FOR ALL policy, which allowed DELETE. An invitation is never
--- deleted — the invitations page is the organization's log of them — so
--- canceling and resending are UPDATEs, and no DELETE policy exists.
-DROP POLICY IF EXISTS "admins manage invites for their organizations" ON organization_invites;
-
 DROP POLICY IF EXISTS "admins can view their organization's invites" ON organization_invites;
 CREATE POLICY "admins can view their organization's invites" ON organization_invites
   FOR SELECT
   TO authenticated
   USING (has_permission(organization_id, 'invites.manage') OR is_platform_admin());
-
-DROP POLICY IF EXISTS "admins can send invites" ON organization_invites;
-CREATE POLICY "admins can send invites" ON organization_invites
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (has_permission(organization_id, 'invites.manage'));
-
-DROP POLICY IF EXISTS "admins can cancel and resend invites" ON organization_invites;
-CREATE POLICY "admins can cancel and resend invites" ON organization_invites
-  FOR UPDATE
-  TO authenticated
-  USING (has_permission(organization_id, 'invites.manage') OR is_platform_admin())
-  WITH CHECK (has_permission(organization_id, 'invites.manage') OR is_platform_admin());
 
 
 -- ============================================================================
@@ -398,3 +819,20 @@ REVOKE ALL ON FUNCTION current_organization_permissions(uuid)          FROM publ
 GRANT EXECUTE ON FUNCTION current_organization_permissions(uuid)       TO authenticated, service_role;
 REVOKE ALL ON FUNCTION can_join_team_session(uuid, uuid)               FROM public, anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION can_join_team_session(uuid, uuid)            TO authenticated, service_role;
+
+-- Internal to the invitation functions.
+REVOKE ALL ON FUNCTION restrict_organization_invites_update()          FROM public, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION hash_invitation_token(text)                     FROM public, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION organization_member_limit(uuid)                 FROM public, anon, authenticated, service_role;
+
+REVOKE ALL ON FUNCTION send_organization_invitation(uuid, text, organization_role) FROM public, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION send_organization_invitation(uuid, text, organization_role) TO authenticated, service_role;
+REVOKE ALL ON FUNCTION resend_organization_invitations(uuid, uuid[])   FROM public, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION resend_organization_invitations(uuid, uuid[]) TO authenticated, service_role;
+REVOKE ALL ON FUNCTION cancel_organization_invitations(uuid, uuid[])   FROM public, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION cancel_organization_invitations(uuid, uuid[]) TO authenticated, service_role;
+REVOKE ALL ON FUNCTION accept_organization_invitation(text)            FROM public, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION accept_organization_invitation(text)         TO authenticated, service_role;
+-- Callable signed out too: the link's holder is who it answers for.
+REVOKE ALL ON FUNCTION get_organization_invitation_preview(text)       FROM public, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION get_organization_invitation_preview(text)    TO anon, authenticated, service_role;
