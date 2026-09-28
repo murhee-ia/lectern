@@ -114,3 +114,30 @@ export type OrganizationInvitation = {
   createdAt: string;
   expiresAt: string;
 };
+
+/**
+ * Where an invitation link stands when it's opened. `expired` is a pending
+ * invitation past its expiry, as everywhere else — not a stored status.
+ */
+export type OrganizationInvitationState =
+  OrganizationInvitationStatus | 'expired';
+
+/**
+ * What opening an invitation link shows its holder, signed in or not, from
+ * `get_organization_invitation_preview()`.
+ */
+export type OrganizationInvitationPreview = {
+  organizationId: string;
+  organizationName: string;
+  /** The address the invitation was sent to — the holder's own. */
+  inviteeEmail: string;
+  inviteeRole: Exclude<OrganizationRole, 'admin'>;
+  inviter: Pick<MemberIdentity, 'displayName' | 'firstName' | 'lastName'>;
+  state: OrganizationInvitationState;
+  /** Whether that address has an account: known only while the link still works. */
+  inviteeHasAccount: boolean | null;
+  /** Signed in with the invited address. False when signed out. */
+  viewerEmailMatches: boolean;
+  /** Signed in and already belonging to the organization. False when signed out. */
+  viewerIsMember: boolean;
+};

@@ -9,6 +9,7 @@ import type {
   AppPermission,
   OrganizationAccess,
   OrganizationInvitation,
+  OrganizationInvitationPreview,
   OrganizationMember,
   OrganizationMemberDetail,
   OrganizationMembership,
@@ -285,10 +286,61 @@ export const getOrganizationSettings = cache(
       throw new Error(`Failed to load organization: ${error.message}`);
     }
     return data
-      ? { 
-        id: data.id, 
-        name: data.name, 
-        joinCode: data.join_code 
-      } : null;
+      ? {
+          id: data.id,
+          name: data.name,
+          joinCode: data.join_code,
+        }
+      : null;
+  },
+);
+
+/**
+ * What an invitation link shows whoever opens it, signed in or not, or null
+ * for a link that matches no invitation. Holding the token is what entitles
+ * the caller to this.
+ */
+export const getOrganizationInvitationPreview = cache(
+  async (
+    invitationToken: string,
+  ): Promise<OrganizationInvitationPreview | null> => {
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase
+      .rpc('get_organization_invitation_preview', {
+        invitation_token: invitationToken,
+      })
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to load invitation: ${error.message}`);
+    }
+    // Both checks only narrow to the type: the table rules out an 'admin'
+    // invitation, and the function only ever returns these four states.
+    if (!data || data.invitee_role === 'admin') return null;
+    const state = data.invitation_state;
+    if (
+      state !== 'pending' &&
+      state !== 'expired' &&
+      state !== 'canceled' &&
+      state !== 'accepted'
+    ) {
+      return null;
+    }
+
+    return {
+      organizationId: data.organization_id,
+      organizationName: data.organization_name,
+      inviteeEmail: data.invitee_email,
+      inviteeRole: data.invitee_role,
+      inviter: {
+        displayName: data.inviter_display_name,
+        firstName: data.inviter_first_name,
+        lastName: data.inviter_last_name,
+      },
+      state,
+      inviteeHasAccount: data.invitee_has_account,
+      viewerEmailMatches: data.viewer_email_matches,
+      viewerIsMember: data.viewer_is_member,
+    };
   },
 );
