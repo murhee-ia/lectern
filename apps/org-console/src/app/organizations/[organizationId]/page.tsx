@@ -1,45 +1,20 @@
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { getOrganizationOverviewAction } from '@/lib/actions/organization/organization.actions';
-import { OrganizationAllMembersTable } from '@/components/organization/organization-all-members-table';
+import { OrganizationOverviewPlaceholder } from '@/components/organization-overview-placeholder';
+import { OrganizationSectionNav } from '@/components/organization-section-nav';
 
-export default async function OrganizationPage({
+export default async function OrganizationDashboardPage({
   params,
-}: {
-  params: Promise<{ organizationId: string }>;
-}) {
+}: PageProps<'/organizations/[organizationId]'>) {
   const { organizationId } = await params;
-  const overview = await getOrganizationOverviewAction(organizationId);
-
-  if (!overview) {
-    notFound();
-  }
-
-  const { organization, members } = overview;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16">
-      <Link
-        href="/"
-        className="text-sm text-foreground/60 hover:text-foreground"
-      >
-        ← Organizations
-      </Link>
-
-      <h1 className="heading-3 mt-4">{organization.name}</h1>
-      <div className="mt-2 flex gap-2">
-        <span className="badge badge-highlight capitalize">
-          {organization.plan} plan
-        </span>
-        <span className="badge">
-          {members.length} member{members.length > 1 ? 's' : ''}
-        </span>
-      </div>
-
-      <div className="glass-card mt-8">
-        <h2 className="mb-4 font-semibold">Members</h2>
-        <OrganizationAllMembersTable members={members} />
-      </div>
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+      {/* The sections come first in reading order — they're what works today
+          — and move into the right-hand column on wide screens. */}
+      <OrganizationSectionNav
+        organizationId={organizationId}
+        className="lg:order-2"
+      />
+      <OrganizationOverviewPlaceholder className="lg:order-1" />
     </div>
   );
 }
