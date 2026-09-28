@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { createServerSupabaseClient } from '@repo/supabase/server';
-import { resolveOrganizationMembershipAction } from '@/lib/actions/auth/auth.actions';
-import { resolveSafeRedirect } from '@repo/lib/utils/auth';
+import { resolveOrganizationMembershipAction } from '@/lib/actions/auth.actions';
+import { resolveSafeRedirect } from '@repo/lib/utils/auth/safe-redirect';
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -40,9 +40,12 @@ export async function GET(request: NextRequest) {
   }
 
   let joinCode: string | null = null;
+  let next: string | null = null;
   if (redirectTo) {
     try {
-      joinCode = new URL(redirectTo).searchParams.get('join_code');
+      const redirectParams = new URL(redirectTo).searchParams;
+      joinCode = redirectParams.get('join_code');
+      next = redirectParams.get('next');
     } catch {
       // redirect_to wasn't a full URL — nothing to recover, proceed without a code
     }
@@ -50,6 +53,14 @@ export async function GET(request: NextRequest) {
 
   const { joinedOrganizationId, joinCodeWasInvalid } =
     await resolveOrganizationMembershipAction(joinCode);
+
+  // Someone who signed up from an invitation goes back to it to accept,
+  // their org-of-one already created above.
+  if (next) {
+    return NextResponse.redirect(
+      resolveSafeRedirect(next, process.env.NEXT_PUBLIC_WORKSPACE_URL!),
+    );
+  }
 
   const workspaceUrl = new URL(process.env.NEXT_PUBLIC_WORKSPACE_URL!);
   if (joinCodeWasInvalid) {

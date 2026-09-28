@@ -10,12 +10,25 @@ import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
 import { VoiceWaveform } from '@repo/ui/components/brand/voice-waveform';
 import { otpRequestSchema, otpVerifySchema } from '@repo/lib/schemas/auth';
-import { resolveSafeRedirect } from '@repo/lib/utils/auth';
+import { resolveSafeRedirect } from '@repo/lib/utils/auth/safe-redirect';
 import { createBrowserSupabaseClient } from '@repo/supabase/browser';
 
-import { TurnstileWidget } from '@/components/auth/turnstile-widget';
+import { authPath } from '@/lib/utils/auth-path';
 
-export function SignInOtpForm({ next }: { next?: string }) {
+import { TurnstileWidget } from '@/components/auth/turnstile-widget';
+import { InvitedEmailNote } from '@/components/auth/invited-email-note';
+
+export function SignInOtpForm({
+  next,
+  invitedEmail,
+  invitationToken,
+}: {
+  next?: string;
+  /** Prefilled and locked for someone opening an invitation. */
+  invitedEmail?: string;
+  /** The invitation being opened, kept on every link between auth pages. */
+  invitationToken?: string;
+}) {
   const router = useRouter();
   const [step, setStep] = useState<'request' | 'verify'>('request');
   const [submittedEmail, setSubmittedEmail] = useState('');
@@ -23,7 +36,7 @@ export function SignInOtpForm({ next }: { next?: string }) {
   const [error, setError] = useState<string | null>(null);
 
   const requestForm = useForm({
-    defaultValues: { email: '' },
+    defaultValues: { email: invitedEmail ?? '' },
     validators: {
       onChange: otpRequestSchema,
     },
@@ -97,7 +110,15 @@ export function SignInOtpForm({ next }: { next?: string }) {
           <Button
             variant="link"
             className="h-auto p-0"
-            onClick={() => router.push('/signup')}
+            onClick={() =>
+              router.push(
+                authPath('/signup', {
+                  next,
+                  email: invitedEmail,
+                  invitation: invitationToken,
+                }),
+              )
+            }
           >
             Create an account
           </Button>
@@ -122,6 +143,7 @@ export function SignInOtpForm({ next }: { next?: string }) {
                   icon={<Mail />}
                   required
                   placeholder="you@example.com"
+                  readOnly={Boolean(invitedEmail)}
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(changeEvent) =>
@@ -140,6 +162,7 @@ export function SignInOtpForm({ next }: { next?: string }) {
                         .join(', ')}
                     </p>
                   )}
+                {invitedEmail && <InvitedEmailNote />}
               </div>
             )}
           </requestForm.Field>
@@ -161,7 +184,15 @@ export function SignInOtpForm({ next }: { next?: string }) {
           <Button
             variant="link"
             className="h-auto p-0"
-            onClick={() => router.push('/signin')}
+            onClick={() =>
+              router.push(
+                authPath('/signin', {
+                  next,
+                  email: invitedEmail,
+                  invitation: invitationToken,
+                }),
+              )
+            }
           >
             Sign in with a password instead
           </Button>
@@ -246,7 +277,15 @@ export function SignInOtpForm({ next }: { next?: string }) {
         <Button
           variant="link"
           className="h-auto p-0"
-          onClick={() => router.push('/signin')}
+          onClick={() =>
+            router.push(
+              authPath('/signin', {
+                next,
+                email: invitedEmail,
+                invitation: invitationToken,
+              }),
+            )
+          }
         >
           Sign in with a password instead
         </Button>

@@ -1,48 +1,55 @@
 import Link from 'next/link';
-import { getWorkspaceOrganizationsAction } from '@repo/server/organization';
 
-export default async function OrgConsolePage() {
-  const { organizations } = await getWorkspaceOrganizationsAction();
+import { getCurrentMemberships } from '@repo/server/organization/queries';
+import { OrganizationRoleBadge } from '@repo/ui/components/customs/organization-role-badge';
+
+import { organizationPath } from '@/lib/utils/organization-routes';
+
+export default async function OrganizationsPage() {
+  const memberships = await getCurrentMemberships();
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16">
+    <div className="mx-auto w-full max-w-2xl px-4 pt-4 pb-16 sm:pt-8">
       <h1 className="heading-3">Your organizations</h1>
+      <p className="mt-2 text-sm text-foreground/70">
+        Open an organization you&apos;re the Admin of to manage it. The rest are
+        listed for reference.
+      </p>
 
-      <div className="mt-8 space-y-3">
-        {organizations.map((organization) => {
-          const isAdmin = organization.role === 'admin';
-          const content = (
+      <ul className="mt-6 flex flex-col gap-3">
+        {memberships.map((membership) => {
+          const summary = (
             <>
-              <div>
-                <p className="font-semibold text-foreground">
-                  {organization.name}
-                </p>
-                <span className="badge badge-highlight mt-1 inline-flex capitalize">
-                  {organization.plan} plan
+              <span className="flex min-w-0 flex-col gap-1.5">
+                <span className="truncate font-semibold text-foreground">
+                  {membership.name}
                 </span>
-              </div>
-              <span className="badge capitalize">{organization.role}</span>
+                <span className="badge badge-highlight self-start capitalize">
+                  {membership.plan} plan
+                </span>
+              </span>
+              <OrganizationRoleBadge role={membership.role} />
             </>
           );
 
-          return isAdmin ? (
-            <Link
-              key={organization.id}
-              href={`/organizations/${organization.id}`}
-              className="glass-card flex items-center justify-between transition hover:bg-accent"
-            >
-              {content}
-            </Link>
-          ) : (
-            <div
-              key={organization.id}
-              className="glass-card flex items-center justify-between opacity-60"
-            >
-              {content}
-            </div>
+          return (
+            <li key={membership.id}>
+              {membership.role === 'admin' ? (
+                <Link
+                  href={organizationPath(membership.id)}
+                  className="glass-card flex items-center justify-between gap-4 text-foreground transition-colors hover:bg-lectern-white/5 hover:text-foreground"
+                >
+                  {summary}
+                </Link>
+              ) : (
+                <div className="glass-card flex items-center justify-between gap-4 opacity-60">
+                  {summary}
+                </div>
+              )}
+            </li>
           );
         })}
-      </div>
+      </ul>
     </div>
   );
 }

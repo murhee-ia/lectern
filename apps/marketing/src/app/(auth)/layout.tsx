@@ -20,12 +20,18 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex flex-1 overflow-hidden">
+    <div className="relative flex flex-1">
       {/* Soft color glows across the page. Purple leads; yellow pop. */}
+      {/* Clip the decoration, not the content. overflow-hidden on the flex
+      row itself also swallowed real layout overflow, no scrollbar, just
+      silently sliced-off text, which is invisible in review and leaves
+      the reader with no way to reach what was cut. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute top-1/3 left-0 h-[36rem] w-[36rem] -translate-x-1/3 rounded-full bg-lectern-accent-purple/30 blur-[130px]"
-      />
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        <div className="absolute top-1/3 left-0 h-[36rem] w-[36rem] -translate-x-1/3 rounded-full bg-lectern-accent-purple/30 blur-[130px]" />
+      </div>
 
       {/* Left: the pitch — desktop/wide viewports only. Sized up to actually
           fill the column rather than float as a small centered block. */}
@@ -59,7 +65,7 @@ export default function AuthLayout({
       </div>
 
       {/* Right: brand header above the card, then the card itself. */}
-      <div className="relative flex flex-1 flex-col items-center justify-center gap-6 px-4 py-6">
+      <div className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-6 px-4 py-6">
         <div className="flex flex-col items-center text-center">
           <div className="flex items-center gap-3">
             <LecternLogo />
@@ -78,7 +84,7 @@ export default function AuthLayout({
               the ambient background. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute -inset-5 rounded-[calc(var(--radius-panel)+1.25rem)] bg-gradient-to-br from-lectern-accent-purple/45 via-lectern-accent-purple/10 to-highlight/15 blur-2xl"
+            className="pointer-events-none absolute -inset-4 rounded-[calc(var(--radius-panel)+1.25rem)] bg-gradient-to-br from-lectern-accent-purple/45 via-lectern-accent-purple/10 to-highlight/15 blur-2xl sm:-inset-5"
           />
           <div className="glass-card relative overflow-hidden border-lectern-white/20 shadow-[0_30px_90px_-25px_rgba(61,24,105,0.7)] backdrop-blur-2xl backdrop-saturate-150">
             <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-highlight to-transparent" />

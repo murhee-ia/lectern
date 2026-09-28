@@ -3,8 +3,8 @@ import { createServerSupabaseClient } from '@repo/supabase/server';
 import {
   resolveOrganizationMembershipAction,
   importOAuthAvatarAction,
-} from '@/lib/actions/auth/auth.actions';
-import { resolveSafeRedirect } from '@repo/lib/utils/auth';
+} from '@/lib/actions/auth.actions';
+import { resolveSafeRedirect } from '@repo/lib/utils/auth/safe-redirect';
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);

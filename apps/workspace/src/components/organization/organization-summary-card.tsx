@@ -1,26 +1,16 @@
-'use client';
-
-import type { WorkspaceOrganizationMembership } from '@repo/types/organization';
-import { useSelectedOrganizationId } from '@/lib/hooks/use-selected-organization-id';
+import type { OrganizationSummary } from '@repo/types/organization';
 
 export function OrganizationSummaryCard({
-  organizations,
-  selectedOrganizationId,
+  organization,
 }: {
-  organizations: WorkspaceOrganizationMembership[];
-  selectedOrganizationId: string;
+  organization: OrganizationSummary;
 }) {
-  const storeSelectedId = useSelectedOrganizationId(selectedOrganizationId);
-  const selectedOrganization = organizations.find(
-    (organization) => organization.id === storeSelectedId,
-  );
-
   return (
     <div className="glass-card">
       <p className="text-sm text-foreground/60">Organization</p>
-      <h1 className="heading-3 mt-1">{selectedOrganization?.name}</h1>
+      <h1 className="heading-3 mt-1">{organization.name}</h1>
       <span className="badge badge-highlight mt-3 inline-flex capitalize">
-        {selectedOrganization?.plan} plan
+        {organization.plan} plan
       </span>
     </div>
   );

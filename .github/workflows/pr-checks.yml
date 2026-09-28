@@ -22,6 +22,11 @@ jobs:
       NEXT_PUBLIC_MARKETING_URL: http://127.0.0.1:3000
       NEXT_PUBLIC_WORKSPACE_URL: http://127.0.0.1:3002
       NEXT_PUBLIC_ORG_CONSOLE_URL: http://127.0.0.1:3001
+      # App-sent email goes to the local stack's mail catcher (supabase/config.toml
+      # [local_smtp] smtp_port), where the E2E tests read it.
+      EMAIL_SMTP_HOST: 127.0.0.1
+      EMAIL_SMTP_PORT: "54325"
+      EMAIL_FROM: Lectern <noreply@lectern.test>
     steps:
       - uses: actions/checkout@v4
         with:

@@ -12,15 +12,33 @@ import { VoiceWaveform } from '@repo/ui/components/brand/voice-waveform';
 import { signUpSchema } from '@repo/lib/schemas/auth';
 import { createBrowserSupabaseClient } from '@repo/supabase/browser';
 
-import { isDisposableEmailDomain } from '@/lib/utils/auth/disposable-email';
+import { authPath } from '@/lib/utils/auth-path';
+import { isDisposableEmailDomain } from '@/lib/utils/disposable-email';
 
 import { TurnstileWidget } from '@/components/auth/turnstile-widget';
+import { InvitedEmailNote } from '@/components/auth/invited-email-note';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 
-export function SignUpForm({ initialJoinCode }: { initialJoinCode?: string }) {
+export function SignUpForm({
+  initialJoinCode,
+  next,
+  invitedEmail,
+  invitationToken,
+  initialError,
+}: {
+  initialJoinCode?: string;
+  /** Where to land once the email is confirmed, e.g. an invitation. */
+  next?: string;
+  /** Prefilled and locked for someone opening an invitation. */
+  invitedEmail?: string;
+  /** The invitation being opened, kept on every link between auth pages. */
+  invitationToken?: string;
+  /** A message from the route that sent them back here, e.g. Google's. */
+  initialError?: string | null;
+}) {
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError ?? null);
   const [submitted, setSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState('');
 
@@ -29,7 +47,7 @@ export function SignUpForm({ initialJoinCode }: { initialJoinCode?: string }) {
       firstName: '',
       lastName: '',
       displayName: '',
-      email: '',
+      email: invitedEmail ?? '',
       password: '',
       joinCode: initialJoinCode ?? '',
     },
@@ -38,6 +56,16 @@ export function SignUpForm({ initialJoinCode }: { initialJoinCode?: string }) {
     },
     onSubmit: async ({ value }) => {
       setError(null);
+
+      // The field is locked to the invited address. Anything else would
+      // make an account the invitation can't be accepted from.
+      if (
+        invitedEmail &&
+        value.email.trim().toLowerCase() !== invitedEmail.toLowerCase()
+      ) {
+        setError(`This invitation is for ${invitedEmail}. Sign up with it.`);
+        return;
+      }
 
       if (isDisposableEmailDomain(value.email)) {
         setError('Please use a permanent email address, not a disposable one.');
@@ -54,6 +82,9 @@ export function SignUpForm({ initialJoinCode }: { initialJoinCode?: string }) {
       const emailRedirectTo = new URL('/', window.location.origin);
       if (data.joinCode)
         emailRedirectTo.searchParams.set('join_code', data.joinCode);
+      // Carried through the confirmation email, so the confirm route can
+      // send someone opening an invitation back to it.
+      if (next) emailRedirectTo.searchParams.set('next', next);
 
       const supabase = createBrowserSupabaseClient();
       const { data: signUpData, error: signUpError } =
@@ -111,7 +142,15 @@ export function SignUpForm({ initialJoinCode }: { initialJoinCode?: string }) {
         <Button
           variant="link"
           className="h-auto p-0"
-          onClick={() => router.push('/signin')}
+          onClick={() =>
+            router.push(
+              authPath('/signin', {
+                next,
+                email: invitedEmail,
+                invitation: invitationToken,
+              }),
+            )
+          }
         >
           Sign in
         </Button>
@@ -125,7 +164,7 @@ export function SignUpForm({ initialJoinCode }: { initialJoinCode?: string }) {
         }}
         className="mt-6 flex flex-col gap-4"
       >
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <form.Field name="firstName">
             {(field) => (
               <div className="grid gap-2">
@@ -234,6 +273,7 @@ export function SignUpForm({ initialJoinCode }: { initialJoinCode?: string }) {
                 icon={<Mail />}
                 required
                 placeholder="you@example.com"
+                readOnly={Boolean(invitedEmail)}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(changeEvent) =>
@@ -252,6 +292,7 @@ export function SignUpForm({ initialJoinCode }: { initialJoinCode?: string }) {
                       .join(', ')}
                   </p>
                 )}
+              {invitedEmail && <InvitedEmailNote />}
             </div>
           )}
         </form.Field>
@@ -339,7 +380,11 @@ export function SignUpForm({ initialJoinCode }: { initialJoinCode?: string }) {
         </span>
         <div className="h-px flex-1 bg-lectern-white/10" />
       </div>
-      <GoogleSignInButton joinCode={joinCode || undefined} />
+      <GoogleSignInButton
+        joinCode={joinCode || undefined}
+        next={next}
+        invitationToken={invitationToken}
+      />
     </div>
   );
 }

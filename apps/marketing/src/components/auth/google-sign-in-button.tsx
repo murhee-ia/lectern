@@ -3,14 +3,34 @@
 import { createBrowserSupabaseClient } from '@repo/supabase/browser';
 import { Button } from '@repo/ui/components/ui/button';
 
+import { GOOGLE_INVITATION_START_PATH } from '@/lib/constants/google-invitation.constants';
+
 export function GoogleSignInButton({
   joinCode,
   next,
+  invitationToken,
 }: {
   joinCode?: string;
   next?: string;
+  /** Set for someone opening an invitation. */
+  invitationToken?: string;
 }) {
   const handleClick = async () => {
+    // Only the invited address can accept, so this sign-in goes through
+    // Lectern, which checks the Google account's address before Supabase
+    // could create an account for a different one.
+    if (invitationToken) {
+      // On the site's configured address, where Google will return.
+      const startUrl = new URL(
+        GOOGLE_INVITATION_START_PATH,
+        process.env.NEXT_PUBLIC_MARKETING_URL,
+      );
+      startUrl.searchParams.set('token', invitationToken);
+      if (joinCode) startUrl.searchParams.set('join_code', joinCode);
+      window.location.assign(startUrl);
+      return;
+    }
+
     const redirectTo = new URL('/auth/callback', window.location.origin);
     if (joinCode) redirectTo.searchParams.set('join_code', joinCode);
     if (next) redirectTo.searchParams.set('next', next);

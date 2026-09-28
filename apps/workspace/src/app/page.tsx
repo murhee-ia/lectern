@@ -1,5 +1,6 @@
-import { createServerSupabaseClient } from '@repo/supabase/server';
-import { getWorkspaceOrganizationsAction } from '@repo/server/organization';
+import { getCurrentMemberProfile } from '@repo/server/auth/profile/queries';
+import { getOrganizationSelection } from '@repo/server/organization/queries';
+import { resolveMemberDisplayName } from '@repo/lib/utils/organization/members';
 import { OrganizationSummaryCard } from '@/components/organization/organization-summary-card';
 
 export default async function WorkspaceHomePage({
@@ -8,28 +9,16 @@ export default async function WorkspaceHomePage({
   searchParams: Promise<{ notice?: string; joinedOrganizationId?: string }>;
 }) {
   const { notice, joinedOrganizationId } = await searchParams;
-  const { organizations, selectedOrganizationId } =
-    await getWorkspaceOrganizationsAction();
+  const [{ organizations, selectedOrganization }, profile] = await Promise.all([
+    getOrganizationSelection(),
+    getCurrentMemberProfile(),
+  ]);
 
   const joinedOrganization = organizations.find(
     (organization) => organization.id === joinedOrganizationId,
   );
 
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not signed in.');
-  }
-
-  const { data: profile } = await supabase
-    .from('member_profiles')
-    .select('display_name, first_name')
-    .eq('id', user.id)
-    .single();
-
-  const greetingName = profile?.display_name || profile?.first_name;
+  const greetingName = profile ? resolveMemberDisplayName(profile) : null;
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-16">
@@ -56,12 +45,7 @@ export default async function WorkspaceHomePage({
           </p>
         </div>
       )}
-
-      <OrganizationSummaryCard
-        organizations={organizations}
-        selectedOrganizationId={selectedOrganizationId}
-      />
-
+      <OrganizationSummaryCard organization={selectedOrganization} />
       <div className="mt-8">
         <h2 className="heading-3">
           Welcome{greetingName ? `, ${greetingName}` : ''}

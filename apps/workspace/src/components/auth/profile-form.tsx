@@ -9,7 +9,7 @@ import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
 import { updateProfileSchema } from '@repo/lib/schemas/profile';
 
-import { updateProfileAction } from '@/lib/actions/auth/auth.actions';
+import { updateProfileAction } from '@/lib/actions/auth.actions';
 
 export function ProfileForm({
   initialDisplayName,
@@ -92,7 +92,7 @@ export function ProfileForm({
           </div>
         )}
       </form.Field>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <form.Field name="firstName">
           {(field) => (
             <div className="grid gap-2">

@@ -10,8 +10,9 @@ import {
   AVATAR_MAX_BYTES,
 } from '@repo/lib/schemas/profile';
 import { createBrowserSupabaseClient } from '@repo/supabase/browser';
+import { MemberAvatar } from '@repo/ui/components/customs/member-avatar';
 
-import { setAvatarAction } from '@/lib/actions/auth/auth.actions';
+import { setAvatarAction } from '@/lib/actions/auth.actions';
 
 export function AvatarUpload({
   userId,
@@ -27,15 +28,6 @@ export function AvatarUpload({
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  const initials = displayName
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
 
   const handleFileChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     const file = changeEvent.target.files?.[0];
@@ -88,18 +80,7 @@ export function AvatarUpload({
   return (
     <div className="flex items-center gap-4">
       <div className="relative">
-        <div className="flex size-16 items-center justify-center overflow-hidden rounded-full border border-lectern-white/15 bg-lectern-white/10 text-lg font-semibold text-foreground">
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- a user-uploaded image so can't use next/image
-            <img
-              src={avatarUrl}
-              alt="profile-avatar"
-              className="size-full object-cover"
-            />
-          ) : (
-            initials || '?'
-          )}
-        </div>
+        <MemberAvatar name={displayName} imageUrl={avatarUrl} size="xl" />
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}

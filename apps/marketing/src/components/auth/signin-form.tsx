@@ -10,21 +10,37 @@ import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
 import { VoiceWaveform } from '@repo/ui/components/brand/voice-waveform';
 import { signInSchema } from '@repo/lib/schemas/auth';
-import { resolveSafeRedirect } from '@repo/lib/utils/auth';
+import { resolveSafeRedirect } from '@repo/lib/utils/auth/safe-redirect';
 import { createBrowserSupabaseClient } from '@repo/supabase/browser';
 
+import { authPath } from '@/lib/utils/auth-path';
+
 import { TurnstileWidget } from '@/components/auth/turnstile-widget';
+import { InvitedEmailNote } from '@/components/auth/invited-email-note';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 
-export function SignInForm({ next }: { next?: string }) {
+export function SignInForm({
+  next,
+  invitedEmail,
+  invitationToken,
+  initialError,
+}: {
+  next?: string;
+  /** Prefilled and locked for someone opening an invitation. */
+  invitedEmail?: string;
+  /** The invitation being opened, kept on every link between auth pages. */
+  invitationToken?: string;
+  /** A message from the route that sent them back here, e.g. Google's. */
+  initialError?: string | null;
+}) {
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError ?? null);
   const [unconfirmed, setUnconfirmed] = useState(false);
 
   const form = useForm({
     defaultValues: {
-      email: '',
+      email: invitedEmail ?? '',
       password: '',
     },
     validators: {
@@ -83,7 +99,15 @@ export function SignInForm({ next }: { next?: string }) {
         <Button
           variant="link"
           className="h-auto p-0"
-          onClick={() => router.push('/signup')}
+          onClick={() =>
+            router.push(
+              authPath('/signup', {
+                next,
+                email: invitedEmail,
+                invitation: invitationToken,
+              }),
+            )
+          }
         >
           Create an account
         </Button>
@@ -108,6 +132,7 @@ export function SignInForm({ next }: { next?: string }) {
                 icon={<Mail />}
                 required
                 placeholder="you@example.com"
+                readOnly={Boolean(invitedEmail)}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(changeEvent) =>
@@ -126,6 +151,7 @@ export function SignInForm({ next }: { next?: string }) {
                       .join(', ')}
                   </p>
                 )}
+              {invitedEmail && <InvitedEmailNote />}
             </div>
           )}
         </form.Field>
@@ -194,12 +220,20 @@ export function SignInForm({ next }: { next?: string }) {
         </span>
         <div className="h-px flex-1 bg-lectern-white/10" />
       </div>
-      <GoogleSignInButton next={next} />
+      <GoogleSignInButton next={next} invitationToken={invitationToken} />
       <p className="mt-4 text-center text-sm">
         <Button
           variant="link"
           className="h-auto p-0"
-          onClick={() => router.push('/otp')}
+          onClick={() =>
+            router.push(
+              authPath('/otp', {
+                next,
+                email: invitedEmail,
+                invitation: invitationToken,
+              }),
+            )
+          }
         >
           Sign in with an email code instead
         </Button>
